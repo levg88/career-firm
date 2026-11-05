@@ -1,0 +1,176 @@
+<%- include("partials/header", { title: (job.title || "Job") + " · Career Firm" }) %>
+<% const fmt = (value) => String(value || "").slice(0, 16).replace("T", " "); %>
+<% const data = analysis ? analysis.data || {} : {}; %>
+<div class="split">
+  <div class="grow">
+    <p class="small muted" style="margin-bottom: 4px;">Job #<%= job.id %></p>
+    <h1><%= job.title || "Untitled role" %><% if (job.company) { %> <span class="muted">· <%= job.company %></span><% } %></h1>
+    <p class="small muted">
+      Submitted <%= fmt(job.created_at) %> UTC
+      · <span class="badge <%= job.status %>"><%= job.status %></span>
+      <% if (analysis) { %>· <%= analysis.verdict %><% } %>
+    </p>
+  </div>
+  <a class="button secondary" href="/jobs/new">Tailor another</a>
+</div>
+
+<% if (!["done", "failed"].includes(job.status)) { %>
+<div class="card" style="margin-top: 18px;">
+  <p><span class="spinner"></span> The firm is working on this job. This page refreshes automatically.</p>
+  <p class="small muted">Typical time: 30–120 seconds, depending on the model and the length of your CVs.</p>
+</div>
+<script>
+  const timer = setInterval(async () => {
+    try {
+      const res = await fetch("/jobs/<%= job.id %>/status");
+      const data = await res.json();
+      if (data.status === "done" || data.status === "failed") {
+        clearInterval(timer);
+        window.location.reload();
+      }
+    } catch (e) {}
+  }, 3000);
+</script>
+<% } %>
+
+<% if (job.status === "failed") { %>
+<div class="banner error">
+  <strong>Tailoring failed.</strong>
+  <% if (job.error) { %><div class="small mono" style="margin-top: 6px;"><%= job.error %></div><% } %>
+  <div style="margin-top: 10px;"><a class="button small secondary" href="/jobs/<%= job.id %>">Reload</a></div>
+</div>
+<% } %>
+
+<% if (analysis) { %>
+<h2>Headhunter analysis</h2>
+<div class="card">
+  <div class="split">
+    <div class="score"><%= data.match_score ?? analysis.score %><strong>/ 100</strong></div>
+    <div class="grow">
+      <h3 style="text-transform: capitalize;"><%= data.match_level || "" %> match</h3>
+      <p><%= data.summary || "" %></p>
+      <p class="small muted">
+        Recommended CV: <strong><%= data.recommended_vertical || "—" %></strong>
+        <% if (data.seniority) { %> · Seniority: <%= data.seniority %><% } %>
+        <% if (data.language) { %> · Language: <%= data.language %><% } %>
+      </p>
+    </div>
+  </div>
+
+  <div class="grid two" style="margin-top: 18px;">
+    <div>
+      <h3>Direct evidence</h3>
+      <% const strengths = data.strengths || []; %>
+      <% if (strengths.length) { %>
+      <ul class="clean small">
+        <% for (const item of strengths.slice(0, 10)) { %>
+        <li>
+          <strong><%= item.requirement || "" %></strong><br>
+          <span class="muted"><%= item.evidence || "" %></span>
+        </li>
+        <% } %>
+      </ul>
+      <% } else { %><p class="small muted">No direct evidence was mapped.</p><% } %>
+    </div>
+    <div>
+      <h3>Gaps to avoid claiming</h3>
+      <% const gaps = data.gaps || []; %>
+      <% if (gaps.length) { %>
+      <ul class="clean small">
+        <% for (const item of gaps.slice(0, 10)) { %>
+        <li>
+          <strong><%= item.requirement || "" %></strong>
+          <span class="badge"><%= item.severity || "medium" %></span><br>
+          <span class="muted"><%= item.mitigation || "" %></span>
+        </li>
+        <% } %>
+      </ul>
+      <% } else { %><p class="small muted">No material gaps detected.</p><% } %>
+    </div>
+  </div>
+
+  <div style="margin-top: 18px;">
+    <h3>ATS keywords</h3>
+    <div class="tag-list">
+      <% for (const kw of (data.ats_keywords || []).slice(0, 40)) { %><span class="tag"><%= kw %></span><% } %>
+    </div>
+  </div>
+
+  <div style="margin-top: 18px;">
+    <h3>Tailoring plan</h3>
+    <ul class="clean small">
+      <% for (const step of data.tailoring_plan || []) { %><li><%= step %></li><% } %>
+    </ul>
+  </div>
+
+  <details>
+    <summary>Raw analysis JSON</summary>
+    <pre><%= analysis_json %></pre>
+  </details>
+</div>
+<% } %>
+
+<% if (generated && generated.length) { %>
+<h2>Generated CV</h2>
+<% for (let index = 0; index < generated.length; index += 1) { const gen = generated[index]; const warnings = gen.warnings || []; %>
+<section class="card" style="margin-bottom: 14px;">
+  <div class="split">
+    <div class="cv-facts">
+      <h3>Version <%= index + 1 %> · <%= gen.language %></h3>
+      <p class="small muted">Generated <%= fmt(gen.created_at) %> UTC</p>
+      <div class="row actions" style="gap: 8px;">
+        <a class="button" href="/generated/<%= gen.id %>/download/pdf">Download PDF</a>
+        <a class="button secondary" href="/generated/<%= gen.id %>/download/docx">Download DOCX</a>
+      </div>
+    </div>
+    <% if (warnings.length) { %>
+    <div style="flex: 1 1 340px;">
+      <h3 style="color: var(--amber);">Grounding warnings (<%= warnings.length %>)</h3>
+      <ul class="warning-list small">
+        <% for (const warning of warnings.slice(0, 12)) { %><li><%= warning %></li><% } %>
+      </ul>
+      <% if (warnings.length > 12) { %><p class="small muted">…and <%= warnings.length - 12 %> more. Review the source CV before sending.</p><% } %>
+    </div>
+    <% } else { %>
+    <div style="flex: 1 1 300px;">
+      <p class="small" style="color: var(--green); font-weight: 600;">No grounding issues detected.</p>
+      <p class="small muted">The generated CV only uses facts found in the selected source CV and context.</p>
+    </div>
+    <% } %>
+  </div>
+
+  <% if (gen.content) { %>
+  <details>
+    <summary>Structured CV content</summary>
+    <pre><%= JSON.stringify(gen.content, null, 2) %></pre>
+  </details>
+  <% } %>
+</section>
+<% } %>
+<% } %>
+
+<h2>Job description</h2>
+<div class="card">
+  <pre style="background: #f8f9fb; color: #344054; white-space: pre-wrap;"><%= job.description %></pre>
+</div>
+
+<% if (workflows && workflows.length) { %>
+<h2>Workflow audit</h2>
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Run</th><th>Status</th><th>Started</th><th>Finished</th><th>Error</th></tr></thead>
+    <tbody>
+    <% for (const wf of workflows) { %>
+      <tr>
+        <td>#<%= wf.id %></td>
+        <td><span class="badge <%= wf.status %>"><%= wf.status %></span></td>
+        <td class="small muted"><%= fmt(wf.created_at) %></td>
+        <td class="small muted"><%= wf.finished_at ? fmt(wf.finished_at) : "—" %></td>
+        <td class="small muted"><%= wf.error || "—" %></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+<%- include("partials/footer") %>

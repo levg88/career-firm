@@ -8,6 +8,9 @@ ATS-safe **PDF + DOCX** — stored in a local SQLite database with a full audit 
 The firm has three agents — **Office Manager**, **Headhunter**, and **Resume Writer** —
 running on a provider-agnostic LLM layer with a local audit trail.
 
+Built with **TypeScript**, **Node.js**, **Express 5**, **SQLite** (`better-sqlite3`),
+**EJS**, `pdfkit` + `pdf-lib`, and `docx` + `mammoth`.
+
 > **LinkedIn:** v1 deliberately does **not** log in to LinkedIn. LinkedIn has no API that
 > exposes your CV or full profile, and automated login/scraping violates its terms. The
 > compliant workflow is to import your CV files and, if you want, a LinkedIn
@@ -74,19 +77,28 @@ oracle — always review before sending.
 
 ## Quickstart
 
-Requirements: **Python 3.11+** (tested on 3.14), no Node, no LibreOffice, no Pandoc.
+Requirements: **Node.js 20+**, no Python, no LibreOffice, no Pandoc.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-
-career-firm serve
+npm install
+npm run build
+npm start
 ```
 
-Open <http://127.0.0.1:8765>. On first run the local **setup wizard** asks for your
-provider, model, API key, and lets you paste or upload your context and CV. There is no
-config file to edit — everything is stored inside `data/firm.db` on your machine.
+For development with auto-reload, use `npm run dev`. Open <http://127.0.0.1:8765>. On
+first run the local **setup wizard** asks for your provider, model, API key, and lets you
+paste or upload your context and CV. There is no config file to edit — everything is
+stored inside `data/firm.db` on your machine.
+
+During development the CLI runs through `tsx`:
+
+```bash
+npm run cli -- serve
+npm run cli -- --home ./data profile show
+```
+
+After `npm run build` (or a global install), the same commands are available as
+`node dist/cli.js ...` and `career-firm ...`.
 
 If you choose **Offline mode** (or skip a key), the app runs using deterministic
 heuristics. It still parses CVs, scores jobs, generates PDF/DOCX, and stores everything;
@@ -97,7 +109,7 @@ case.
 
 The wizard is served by the app itself:
 
-1. Run `career-firm serve` and open the printed URL.
+1. Run `npm start` (or `npm run cli -- serve`) and open the printed URL.
 2. Choose a provider: **OpenAI / OpenAI-compatible**, **Anthropic**, **Ollama**, or
    **Offline mode**.
 3. Paste an API key when the provider needs one. For OpenRouter, vLLM, a proxy, or a
@@ -121,9 +133,9 @@ In the web UI:
 Or from the CLI:
 
 ```bash
-career-firm profile set-context ./examples/context.example.md
-career-firm profile add-cv ./examples/cv.example.md --vertical "AI Platforms"
-career-firm profile show
+npm run cli -- profile set-context ./examples/context.example.md
+npm run cli -- profile add-cv ./examples/cv.example.md --vertical "AI Platforms"
+npm run cli -- profile show
 ```
 
 ### Tailor a CV
@@ -133,9 +145,9 @@ Web: **Tailor CV** → paste/upload the job description → wait for the run.
 CLI:
 
 ```bash
-career-firm job add --file ./jd.txt --title "VP Engineering" --company "Nimbus AI"
-career-firm job list
-career-firm job show 1
+npm run cli -- job add --file ./jd.txt --title "VP Engineering" --company "Nimbus AI"
+npm run cli -- job list
+npm run cli -- job show 1
 ```
 
 Outputs are saved under:
@@ -157,6 +169,9 @@ data/
 ---
 
 ## CLI reference
+
+After `npm run build`, run these with `node dist/cli.js <command>` or with
+`npm run cli -- <command>` during development.
 
 ```text
 career-firm init                         Initialise DB and data directories
@@ -301,32 +316,31 @@ provider receives the prompt. SQLite uses WAL mode and a connection per operatio
 
 ### Add a firm agent
 
-Each agent lives in its own package under `src/career_firm/agents/`:
+Each agent lives in its own module under `src/agents/`:
 
 ```text
 agents/
-  office_manager/   agent.py
-  headhunter/       agent.py
-  resume_writer/    agent.py
-  base.py           shared Agent / AgentSpec runtime
-  runner.py         schema validation, retries, audit logging
-  grounding.py      deterministic truthfulness checks
-  prompts.py        system prompts for the three roles
+  base.ts            shared Agent / AgentSpec / tool runtime
+  runner.ts          audit logging and deterministic fallback records
+  grounding.ts       deterministic truthfulness checks
+  prompts.ts         system prompts for the three roles
+  office-manager.ts  Office Manager
+  headhunter.ts      Headhunter
+  resume-writer.ts   Resume Writer
 ```
 
 To add an agent:
 
-1. Add a prompt in `src/career_firm/agents/prompts.py`.
-2. Create `src/career_firm/agents/<name>/agent.py` with a class that wraps
-   `Agent` + `run_agent(...)`.
-3. Export it from the package `__init__.py` and from `agents/__init__.py`.
-4. Call `run_agent(...)` with a Pydantic schema so the output is validated and audited.
+1. Add a prompt in `src/agents/prompts.ts`.
+2. Create `src/agents/<name>.ts` with a class that wraps `Agent` + `runAgent(...)`.
+3. Export it from `src/agents/index.ts`.
+4. Call `runAgent(...)` with a Zod schema so the output is validated and audited.
 5. Wire it into `FirmService` or a new orchestrator.
 
 ### Add a provider
 
-Implement `LLMClient.complete(...)` in `src/career_firm/llm/`, normalize tool calls to
-`ToolCall`, and register it in `build_llm`.
+Implement `LLMClient.complete(...)` in `src/llm/`, normalize tool calls to `ToolCall`,
+and register it in `buildLlm`.
 
 ---
 
@@ -347,13 +361,15 @@ Implement `LLMClient.complete(...)` in `src/career_firm/llm/`, normalize tool ca
 ## Tests
 
 ```bash
-pytest -q
+npm test
+npm run typecheck
+npm run build
 ```
 
 Covered: heuristic parsing, job analysis, tailoring, grounding, DOCX/PDF extraction and
 rendering, SQLite round-trips, the firm workflow, the agent tool-calling loop, JSON
 repair, the startup setup wizard and config persistence, and all web routes (including
-uploads, downloads, and background tasks).
+uploads, downloads, and background jobs).
 
 ---
 

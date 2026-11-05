@@ -1,17 +1,22 @@
-.PHONY: install test serve init doctor
+.PHONY: install build start dev test typecheck clean
 
 install:
-	python3 -m venv .venv
-	.venv/bin/pip install -e ".[dev]"
+	npm install
+
+build:
+	npm run build
+
+start:
+	npm start
+
+dev:
+	npm run dev
 
 test:
-	.venv/bin/pytest -q
+	npm test
 
-init:
-	.venv/bin/career-firm init
+typecheck:
+	npm run typecheck
 
-doctor:
-	.venv/bin/career-firm doctor
-
-serve:
-	.venv/bin/career-firm serve
+clean:
+	rm -rf dist coverage

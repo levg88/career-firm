@@ -1,0 +1,33 @@
+<%- include("partials/header", { title: "Jobs · Career Firm" }) %>
+<% const fmt = (value) => String(value || "").slice(0, 16).replace("T", " "); %>
+<div class="split">
+  <div class="grow">
+    <h1>Jobs</h1>
+    <p class="lead">Every job description you have screened, with its match score and generated documents.</p>
+  </div>
+  <a class="button" href="/jobs/new">Tailor a CV</a>
+</div>
+
+<% if (jobs && jobs.length) { %>
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>#</th><th>Role</th><th>Company</th><th>Status</th><th>Created</th><th>CVs</th><th></th></tr></thead>
+    <tbody>
+    <% for (const job of jobs) { %>
+      <tr>
+        <td><%= job.id %></td>
+        <td><a href="/jobs/<%= job.id %>"><%= job.title || "Untitled role" %></a></td>
+        <td><%= job.company || "—" %></td>
+        <td><span class="badge <%= job.status %>"><%= job.status %></span></td>
+        <td class="small muted"><%= fmt(job.created_at) %></td>
+        <td><%= job.generated_count %></td>
+        <td><a class="small" href="/jobs/<%= job.id %>">Open →</a></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+</div>
+<% } else { %>
+<div class="empty">No jobs yet. <a href="/jobs/new">Submit your first job description.</a></div>
+<% } %>
+<%- include("partials/footer") %>

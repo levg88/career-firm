@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= typeof title !== "undefined" ? title : "Career Firm" %></title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-mark">CF</span>
+      <span>Career Firm</span>
+    </a>
+    <nav>
+      <% if (settings.setupComplete) { %>
+      <a href="/" class="<%= active === "home" ? "active" : "" %>">Dashboard</a>
+      <a href="/profile" class="<%= active === "profile" ? "active" : "" %>">Profile</a>
+      <a href="/jobs" class="<%= active === "jobs" ? "active" : "" %>">Jobs</a>
+      <a href="/jobs/new" class="<%= active === "new" ? "active" : "" %>">Tailor CV</a>
+      <a href="/runs" class="<%= active === "runs" ? "active" : "" %>">Runs</a>
+      <a href="/settings" class="<%= active === "settings" ? "active" : "" %>">Settings</a>
+      <% } else { %>
+      <a href="/setup" class="active">Setup</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="container">
+    <% if (llm_note) { %><div class="banner"><%= llm_note %></div><% } %>
+    <% if (error) { %><div class="banner error"><%= error %></div><% } %>
+    <% if (message) { %><div class="banner success"><%= message %></div><% } %>
