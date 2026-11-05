@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Resume Firm{% endblock %}
+{% block content %}
+<div class="split">
+  <div class="grow">
+    <h1>Your private career firm</h1>
+    <p class="lead">
+      Import your CV versions and context once. For every job description, the headhunter
+      maps evidence to requirements, the resume writer tailors the strongest version, and
+      you get an ATS-safe PDF and DOCX.
+    </p>
+  </div>
+  <a class="button" href="/jobs/new">Tailor a CV</a>
+</div>
+
+{% if cv_count == 0 %}
+<div class="banner">
+  Start by <a href="/profile">importing your context file and at least one CV version</a>.
+  Once that is done, paste a job description and the firm takes over.
+</div>
+{% endif %}
+
+<div class="grid three" style="margin-top: 20px;">
+  <section class="card compact">
+    <div class="stat">{{ cv_count }}</div>
+    <div class="stat-label">CV versions configured</div>
+    <p class="small muted" style="margin: 8px 0 0;">
+      {% if profile.context_text %}Context: {{ profile.context_text|length }} chars{% else %}No context file yet{% endif %}
+    </p>
+  </section>
+  <section class="card compact">
+    <div class="stat">{{ stats.jobs }}</div>
+    <div class="stat-label">Jobs analysed</div>
+    <p class="small muted" style="margin: 8px 0 0;">{{ stats.generated_cvs }} tailored CVs generated</p>
+  </section>
+  <section class="card compact">
+    <div class="stat">{{ stats.agent_runs }}</div>
+    <div class="stat-label">Agent runs recorded</div>
+    <p class="small muted" style="margin: 8px 0 0;">{{ settings.provider }} / {{ settings.model }}</p>
+  </section>
+</div>
+
+<h2>How the firm works</h2>
+<div class="grid three">
+  <section class="card">
+    <h3>1 · Office manager</h3>
+    <p class="small muted">Reads your CV versions and context file into a faithful, structured record. No invented facts.</p>
+  </section>
+  <section class="card">
+    <h3>2 · Headhunter</h3>
+    <p class="small muted">Decodes the posting, maps must-haves to direct evidence, scores the match, and finds the gaps.</p>
+  </section>
+  <section class="card">
+    <h3>3 · Resume writer</h3>
+    <p class="small muted">Selects and rewrites only supported content, keeps every employer and date, and renders PDF + DOCX.</p>
+  </section>
+</div>
+
+<h2>Recent jobs</h2>
+{% if jobs %}
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>Job</th><th>Company</th><th>Status</th><th>Generated</th><th></th></tr></thead>
+    <tbody>
+    {% for job in jobs %}
+      <tr>
+        <td><a href="/jobs/{{ job.id }}">{{ job.title or "Untitled role" }}</a></td>
+        <td>{{ job.company or "—" }}</td>
+        <td><span class="badge {{ job.status }}">{{ job.status }}</span></td>
+        <td>{{ job.generated_count }}</td>
+        <td><a class="small" href="/jobs/{{ job.id }}">Open →</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">No jobs yet. <a href="/jobs/new">Submit your first job description.</a></div>
+{% endif %}
+{% endblock %}

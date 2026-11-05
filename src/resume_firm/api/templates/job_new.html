@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Tailor a CV · Resume Firm{% endblock %}
+{% block content %}
+<h1>Tailor a CV to a job</h1>
+<p class="lead">
+  Paste the job description or upload it. The headhunter will screen it, pick the
+  strongest CV vertical, and the resume writer will produce a job-specific PDF and DOCX.
+</p>
+
+<form method="post" action="/jobs" enctype="multipart/form-data">
+  <section class="card">
+    <div class="field">
+      <label for="description">Job description</label>
+      <textarea id="description" name="description" placeholder="Paste the full job posting here...">{{ form.description if form else "" }}</textarea>
+    </div>
+    <div class="field">
+      <label for="jd-file">…or upload a job description (DOCX, PDF, TXT, MD)</label>
+      <input id="jd-file" type="file" name="jd_file" accept=".docx,.pdf,.txt,.md,.markdown">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="title">Job title (optional)</label>
+        <input id="title" type="text" name="title" value="{{ form.title if form else '' }}" placeholder="VP Engineering">
+      </div>
+      <div class="field">
+        <label for="company">Company (optional)</label>
+        <input id="company" type="text" name="company" value="{{ form.company if form else '' }}" placeholder="Nimbus AI">
+      </div>
+      <div class="field">
+        <label for="language">Output language (optional)</label>
+        <input id="language" type="text" name="language" placeholder="Auto — match posting">
+      </div>
+    </div>
+    <button type="submit">Run the firm</button>
+    <span class="small muted" style="margin-left: 10px;">The analysis and documents are saved locally.</span>
+  </section>
+</form>
+
+<div class="card" style="margin-top: 18px;">
+  <h3>What happens next</h3>
+  <ul class="clean small">
+    <li><strong>Headhunter:</strong> extracts must-haves, ATS keywords, culture signals, red flags, and an evidence-based match score.</li>
+    <li><strong>Resume writer:</strong> uses only the selected source CV and your context; preserves employers, titles, dates, and metrics.</li>
+    <li><strong>Grounding check:</strong> flags any new employer, year, metric, or contact detail that is not in the source material.</li>
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Runs · Resume Firm{% endblock %}
+{% block content %}
+<h1>Audit trail</h1>
+<p class="lead">
+  Every workflow and model call is recorded locally. This is the firm's paper trail:
+  what was asked, which role answered, how many tokens it used, and what it returned.
+</p>
+
+<h2>Workflows</h2>
+{% if workflows %}
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>#</th><th>Kind</th><th>Title</th><th>Status</th><th>Created</th><th></th></tr></thead>
+    <tbody>
+    {% for wf in workflows %}
+      <tr>
+        <td>{{ wf.id }}</td>
+        <td><span class="badge">{{ wf.kind }}</span></td>
+        <td>{{ wf.title }}</td>
+        <td><span class="badge {{ wf.status }}">{{ wf.status }}</span></td>
+        <td class="small muted">{{ wf.created_at[:16].replace("T", " ") }}</td>
+        <td>
+          {% if wf.kind == "build" %}
+            <a class="small" href="/build/{{ wf.id }}">Open →</a>
+          {% elif wf.input.get("job_id") %}
+            <a class="small" href="/jobs/{{ wf.input.get('job_id') }}">Open job →</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">No workflows recorded yet.</div>
+{% endif %}
+
+<h2>Agent calls</h2>
+{% if agent_runs %}
+<div class="card table-wrap">
+  <table>
+    <thead><tr><th>#</th><th>Role</th><th>Workflow</th><th>Status</th><th>Provider / model</th><th>Tokens</th><th>Started</th></tr></thead>
+    <tbody>
+    {% for run in agent_runs %}
+      <tr>
+        <td>{{ run.id }}</td>
+        <td><strong>{{ run.role }}</strong></td>
+        <td class="small muted">{{ run.workflow }}</td>
+        <td><span class="badge {{ run.status }}">{{ run.status }}</span></td>
+        <td class="small muted">{{ run.provider }} / {{ run.model }}</td>
+        <td class="small muted">{{ run.prompt_tokens }} + {{ run.completion_tokens }}</td>
+        <td class="small muted">{{ run.created_at[:16].replace("T", " ") }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">No agent calls yet. Run a CV tailoring or a build.</div>
+{% endif %}
+{% endblock %}
