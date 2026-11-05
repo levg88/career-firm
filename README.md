@@ -1,15 +1,12 @@
-# Resume Firm
+# Career Firm
 
-A small, local-first **agent-run career firm**. Import your CV versions and a context
-file once. For every job description, a headhunter agent screens the role, maps your
-evidence to its requirements, and a resume-writer agent produces a tailored,
+A small, local-first **boutique career firm run by agents**. Import your CV versions and
+a context file once. For every job description, a headhunter agent screens the role, maps
+your evidence to its requirements, and a resume-writer agent produces a tailored,
 ATS-safe **PDF + DOCX** — stored in a local SQLite database with a full audit trail.
 
-It also ships the reusable agent infrastructure that built it:
-
-- **Firm agents:** Office Manager, Headhunter, Resume Writer
-- **Build agents:** Product Manager, Architect, Developer, QA
-- **Runtime:** provider-agnostic LLM client, tool-calling loop, sandboxed workspace, SQLite audit log
+The firm has three agents — **Office Manager**, **Headhunter**, and **Resume Writer** —
+running on a provider-agnostic LLM layer with a local audit trail.
 
 > **LinkedIn:** v1 deliberately does **not** log in to LinkedIn. LinkedIn has no API that
 > exposes your CV or full profile, and automated login/scraping violates its terms. The
@@ -73,21 +70,6 @@ year, number, email, or phone that is not present in the source material. Warnin
 shown in the UI and stored with each generated CV. It is a safety net, not a truth
 oracle — always review before sending.
 
-### The general build agents
-
-The same runtime powers a reusable software team:
-
-| Agent | Output |
-|---|---|
-| **Product Manager** | Product spec, user stories, acceptance criteria, non-goals, risks |
-| **Architect** | Stack, file plan, data model, interfaces, test plan |
-| **Developer** | Real files written into a sandboxed workspace, tests run |
-| **QA** | Acceptance-criteria review, test run, pass/fail report |
-
-Use it from the UI (`Build lab`) or the CLI (`resume-firm build "..."`). Each run gets
-its own workspace under `data/runs/build_<id>/workspace/`, and every artifact is stored
-in SQLite.
-
 ---
 
 ## Quickstart
@@ -99,7 +81,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-resume-firm serve
+career-firm serve
 ```
 
 Open <http://127.0.0.1:8765>. On first run the local **setup wizard** asks for your
@@ -115,7 +97,7 @@ case.
 
 The wizard is served by the app itself:
 
-1. Run `resume-firm serve` and open the printed URL.
+1. Run `career-firm serve` and open the printed URL.
 2. Choose a provider: **OpenAI / OpenAI-compatible**, **Anthropic**, **Ollama**, or
    **Offline mode**.
 3. Paste an API key when the provider needs one. For OpenRouter, vLLM, a proxy, or a
@@ -139,9 +121,9 @@ In the web UI:
 Or from the CLI:
 
 ```bash
-resume-firm profile set-context ./examples/context.example.md
-resume-firm profile add-cv ./examples/cv.example.md --vertical "AI Platforms"
-resume-firm profile show
+career-firm profile set-context ./examples/context.example.md
+career-firm profile add-cv ./examples/cv.example.md --vertical "AI Platforms"
+career-firm profile show
 ```
 
 ### Tailor a CV
@@ -151,9 +133,9 @@ Web: **Tailor CV** → paste/upload the job description → wait for the run.
 CLI:
 
 ```bash
-resume-firm job add --file ./jd.txt --title "VP Engineering" --company "Nimbus AI"
-resume-firm job list
-resume-firm job show 1
+career-firm job add --file ./jd.txt --title "VP Engineering" --company "Nimbus AI"
+career-firm job list
+career-firm job show 1
 ```
 
 Outputs are saved under:
@@ -170,7 +152,6 @@ data/
       Jane-Doe_Nimbus-AI_VP-Engineering_20261105-164240.docx
   runs/
     tailor_1/
-    build_1/workspace/
 ```
 
 ---
@@ -178,20 +159,19 @@ data/
 ## CLI reference
 
 ```text
-resume-firm init                         Initialise DB and data directories
-resume-firm config                       Print effective config (no secrets)
-resume-firm doctor                       Check provider, deps, fonts, DB stats
-resume-firm profile show                 Profile + CV inventory
-resume-firm profile set-context FILE     Import the context file
-resume-firm profile add-cv FILE --vertical NAME
-resume-firm profile list-cvs
-resume-firm job add --file JD [--title T] [--company C] [--language en] [--no-run]
-resume-firm job run ID                   Re-run tailoring
-resume-firm job list
-resume-firm job show ID [--json]
-resume-firm build "BRIEF" [--title T]    Run PM → architect → developer → QA
-resume-firm serve [--host H] [--port P]
-resume-firm agents [--prompt ROLE]       List roles / print a role prompt
+career-firm init                         Initialise DB and data directories
+career-firm config                       Print effective config (no secrets)
+career-firm doctor                       Check provider, deps, fonts, DB stats
+career-firm profile show                 Profile + CV inventory
+career-firm profile set-context FILE     Import the context file
+career-firm profile add-cv FILE --vertical NAME
+career-firm profile list-cvs
+career-firm job add --file JD [--title T] [--company C] [--language en] [--no-run]
+career-firm job run ID                   Re-run tailoring
+career-firm job list
+career-firm job show ID [--json]
+career-firm serve [--host H] [--port P]
+career-firm agents [--prompt ROLE]       List roles / print a role prompt
 ```
 
 `--home DIR` overrides the data directory for any command.
@@ -217,25 +197,25 @@ finish the wizard, the stored configuration takes precedence.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `RESUME_FIRM_PROVIDER` | auto | `openai`, `anthropic`, `ollama`, or `mock` |
-| `RESUME_FIRM_MODEL` | provider-specific | Model ID |
-| `RESUME_FIRM_SETUP_COMPLETE` | auto | Set `false` to force the wizard on next start |
+| `CAREER_FIRM_PROVIDER` | auto | `openai`, `anthropic`, `ollama`, or `mock` |
+| `CAREER_FIRM_MODEL` | provider-specific | Model ID |
+| `CAREER_FIRM_SETUP_COMPLETE` | auto | Set `false` to force the wizard on next start |
 | `OPENAI_API_KEY` | — | OpenAI or compatible provider |
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Any OpenAI-compatible endpoint |
 | `ANTHROPIC_API_KEY` | — | Native Anthropic adapter |
 | `ANTHROPIC_BASE_URL` | `https://api.anthropic.com/v1` | Anthropic-compatible endpoint |
 | `OLLAMA_BASE_URL` | `http://localhost:11434/v1` | Ollama’s OpenAI-compatible endpoint |
-| `RESUME_FIRM_TEMPERATURE` | `0.2` | Generation temperature |
-| `RESUME_FIRM_MAX_TOKENS` | `8192` | Per-call limit |
-| `RESUME_FIRM_MAX_STEPS` | `12` | Tool-calling loop cap |
-| `RESUME_FIRM_TIMEOUT` | `180` | Provider request timeout (seconds) |
-| `RESUME_FIRM_HEURISTIC_FALLBACK` | `true` | Fall back to deterministic agents if a model call fails |
-| `RESUME_FIRM_HOME` | `./data` | Database, uploads, generated files, run workspaces |
-| `RESUME_FIRM_MAX_UPLOAD_MB` | `15` | Upload limit |
-| `RESUME_FIRM_HOST` | `127.0.0.1` | Bind address |
-| `RESUME_FIRM_PORT` | `8765` | Bind port |
-| `RESUME_FIRM_LANGUAGE` | `en` | Default output language |
-| `RESUME_FIRM_FONT_PATH` | auto | Optional TTF for PDF rendering |
+| `CAREER_FIRM_TEMPERATURE` | `0.2` | Generation temperature |
+| `CAREER_FIRM_MAX_TOKENS` | `8192` | Per-call limit |
+| `CAREER_FIRM_MAX_STEPS` | `12` | Tool-calling loop cap |
+| `CAREER_FIRM_TIMEOUT` | `180` | Provider request timeout (seconds) |
+| `CAREER_FIRM_HEURISTIC_FALLBACK` | `true` | Fall back to deterministic agents if a model call fails |
+| `CAREER_FIRM_HOME` | `./data` | Database, uploads, generated files, run workspaces |
+| `CAREER_FIRM_MAX_UPLOAD_MB` | `15` | Upload limit |
+| `CAREER_FIRM_HOST` | `127.0.0.1` | Bind address |
+| `CAREER_FIRM_PORT` | `8765` | Bind port |
+| `CAREER_FIRM_LANGUAGE` | `en` | Default output language |
+| `CAREER_FIRM_FONT_PATH` | auto | Optional TTF for PDF rendering |
 
 Provider behaviour:
 
@@ -299,9 +279,8 @@ SQLite (`data/firm.db`):
 | `jobs` | Job description, title, company, language, status, error |
 | `analyses` | Headhunter JSON, score, selected CV |
 | `generated_cvs` | Tailored content JSON, PDF/DOCX paths, warnings |
-| `workflow_runs` | Tailor/build runs, status, workspace, error |
+| `workflow_runs` | Tailor runs, status, workspace, error |
 | `agent_runs` | Role, provider, model, tokens, input/output audit |
-| `artifacts` | Build-lab specs, architecture, reports and paths |
 | `app_settings` | Provider, model, base URLs, keys, defaults saved by the setup wizard |
 
 Files are stored under `data/` and never leave your machine unless your configured model
@@ -313,48 +292,31 @@ provider receives the prompt. SQLite uses WAL mode and a connection per operatio
 
 ### Add a firm agent
 
-Each agent lives in its own package under `src/resume_firm/agents/`:
+Each agent lives in its own package under `src/career_firm/agents/`:
 
 ```text
 agents/
   office_manager/   agent.py
   headhunter/       agent.py
   resume_writer/    agent.py
-  product_manager/  agent.py
-  architect/        agent.py
-  developer/        agent.py
-  qa/               agent.py
-  build_team.py     facade used by the build pipeline
   base.py           shared Agent / AgentSpec runtime
   runner.py         schema validation, retries, audit logging
-  tools.py          sandboxed file and command tools
-  prompts.py        system prompts for every role
+  grounding.py      deterministic truthfulness checks
+  prompts.py        system prompts for the three roles
 ```
 
 To add an agent:
 
-1. Add a prompt in `src/resume_firm/agents/prompts.py`.
-2. Create `src/resume_firm/agents/<name>/agent.py` with a class that wraps
+1. Add a prompt in `src/career_firm/agents/prompts.py`.
+2. Create `src/career_firm/agents/<name>/agent.py` with a class that wraps
    `Agent` + `run_agent(...)`.
 3. Export it from the package `__init__.py` and from `agents/__init__.py`.
 4. Call `run_agent(...)` with a Pydantic schema so the output is validated and audited.
 5. Wire it into `FirmService` or a new orchestrator.
 
-### Add a future app
-
-Use the build pipeline as a starting point:
-
-```bash
-resume-firm build "A local CLI that manages a reading list with tags and search" --title "Reading list"
-```
-
-The developer agent writes into `data/runs/build_<id>/workspace/`, and QA runs the test
-suite there. The general runtime has no dependency on the CV firm, so it can be reused
-for other products.
-
 ### Add a provider
 
-Implement `LLMClient.complete(...)` in `src/resume_firm/llm/`, normalize tool calls to
+Implement `LLMClient.complete(...)` in `src/career_firm/llm/`, normalize tool calls to
 `ToolCall`, and register it in `build_llm`.
 
 ---
@@ -366,8 +328,6 @@ Implement `LLMClient.complete(...)` in `src/resume_firm/llm/`, normalize tool ca
 - Provider keys live only in the local SQLite database (`data/firm.db`, mode `0600`) and
   are sent only to the provider you configure. The UI masks them after saving.
 - Uploads are extension-checked and size-limited; filenames are sanitized.
-- The build sandbox prevents path escapes and allows a small command allowlist. It is an
-  isolation convenience, not a hardened security boundary — run only code you trust.
 - Data at rest is otherwise unencrypted. Use full-disk encryption and back up `data/` if
   needed.
 - Sending CV/context text to a cloud model provider is your choice; use Ollama for a
@@ -382,9 +342,9 @@ pytest -q
 ```
 
 Covered: heuristic parsing, job analysis, tailoring, grounding, DOCX/PDF extraction and
-rendering, SQLite round-trips, the firm workflow, the build pipeline, the agent
-tool-calling loop, JSON repair, sandbox guards, the startup setup wizard and config
-persistence, and all web routes (including uploads, downloads, and background tasks).
+rendering, SQLite round-trips, the firm workflow, the agent tool-calling loop, JSON
+repair, the startup setup wizard and config persistence, and all web routes (including
+uploads, downloads, and background tasks).
 
 ---
 
@@ -392,7 +352,7 @@ persistence, and all web routes (including uploads, downloads, and background ta
 
 - **LinkedIn:** no automated login/scraping. Planned: compliant OAuth basics and a
   guided LinkedIn PDF-export importer.
-- **Language:** output language follows the posting or `RESUME_FIRM_LANGUAGE`. DOCX
+- **Language:** output language follows the posting or `CAREER_FIRM_LANGUAGE`. DOCX
   handles Unicode; PDF uses system Unicode fonts. Complex RTL shaping may need
   `uharfbuzz` and a font with the right coverage.
 - **Page fitting** is approximate: the PDF is measured and shrunk to two pages; the DOCX

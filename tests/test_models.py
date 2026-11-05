@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from resume_firm.models import JobAnalysis, ParsedCV, TailoredCV
+from career_firm.models import JobAnalysis, ParsedCV, TailoredCV
 
 
 def test_job_analysis_accepts_llm_shorthand():

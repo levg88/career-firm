@@ -5,19 +5,19 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from resume_firm import db
-from resume_firm.api.app import create_app
-from resume_firm.config import Settings
+from career_firm import db
+from career_firm.api.app import create_app
+from career_firm.config import Settings
 
 
 @pytest.fixture
 def fresh_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Settings:
     """A first-run installation with nothing configured yet."""
-    monkeypatch.setenv("RESUME_FIRM_HOME", str(tmp_path / "data"))
+    monkeypatch.setenv("CAREER_FIRM_HOME", str(tmp_path / "data"))
     for key in (
-        "RESUME_FIRM_PROVIDER",
-        "RESUME_FIRM_MODEL",
-        "RESUME_FIRM_SETUP_COMPLETE",
+        "CAREER_FIRM_PROVIDER",
+        "CAREER_FIRM_MODEL",
+        "CAREER_FIRM_SETUP_COMPLETE",
         "OPENAI_API_KEY",
         "ANTHROPIC_API_KEY",
     ):
@@ -51,7 +51,7 @@ def test_setup_page_renders_wizard(fresh_client: TestClient):
     response = fresh_client.get("/setup")
     assert response.status_code == 200
     body = response.text
-    assert "Set up Resume Firm" in body
+    assert "Set up Career Firm" in body
     assert 'name="provider"' in body
     assert 'name="api_key"' in body
     assert 'name="context_file"' in body
@@ -149,7 +149,7 @@ def test_settings_masks_saved_key(fresh_client: TestClient, fresh_settings: Sett
 def test_cli_applies_stored_settings(
     fresh_settings: Settings, monkeypatch: pytest.MonkeyPatch
 ):
-    from resume_firm.cli import _apply_stored_settings
+    from career_firm.cli import _apply_stored_settings
 
     db.init_db(fresh_settings.db_path)
     with db.session(fresh_settings.db_path) as conn:

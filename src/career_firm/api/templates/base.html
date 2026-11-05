@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Resume Firm{% endblock %}</title>
+  <title>{% block title %}Career Firm{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="/">
-      <span class="brand-mark">RF</span>
-      <span>Resume Firm</span>
+      <span class="brand-mark">CF</span>
+      <span>Career Firm</span>
     </a>
     <nav>
       {% if settings.setup_complete %}
@@ -18,7 +18,6 @@
       <a href="/profile" class="{{ 'active' if active == 'profile' else '' }}">Profile</a>
       <a href="/jobs" class="{{ 'active' if active == 'jobs' else '' }}">Jobs</a>
       <a href="/jobs/new" class="{{ 'active' if active == 'new' else '' }}">Tailor CV</a>
-      <a href="/build" class="{{ 'active' if active == 'build' else '' }}">Build lab</a>
       <a href="/runs" class="{{ 'active' if active == 'runs' else '' }}">Runs</a>
       <a href="/settings" class="{{ 'active' if active == 'settings' else '' }}">Settings</a>
       {% else %}

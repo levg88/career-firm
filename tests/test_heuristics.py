@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from resume_firm.agents.grounding import remove_unsupported_keywords, validate_grounding
-from resume_firm.documents.heuristics import (
+from career_firm.agents.grounding import remove_unsupported_keywords, validate_grounding
+from career_firm.documents.heuristics import (
     analyze_job_heuristic,
     parse_cv_heuristic,
     tailor_heuristic,
 )
-from resume_firm.models import ContactInfo, ExperienceItem, JobAnalysis, TailoredCV
+from career_firm.models import ContactInfo, ExperienceItem, JobAnalysis, TailoredCV
 
 
 def test_parse_cv_heuristic_extracts_roles_and_identity(sample_cv):

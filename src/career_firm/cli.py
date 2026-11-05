@@ -14,7 +14,6 @@ from .config import Settings
 from .documents.extract import ExtractionError, extract_text
 from .llm import build_llm
 from .llm.mock import MockClient
-from .orchestrator.build import BuildService
 from .orchestrator.firm import FirmService
 
 
@@ -59,11 +58,11 @@ def cmd_init(settings: Settings, args) -> int:
     settings.ensure_dirs()
     db.init_db(settings.db_path)
     profile_id = _profile_id(settings)
-    print(f"Initialised Resume Firm in {settings.data_dir}")
+    print(f"Initialised Career Firm in {settings.data_dir}")
     print(f"  database: {settings.db_path}")
     print(f"  profile id: {profile_id}")
     print(f"  provider: {settings.provider} / {settings.model}")
-    print("Next: resume-firm profile set-context <file> and profile add-cv <file> --vertical <name>")
+    print("Next: career-firm profile set-context <file> and profile add-cv <file> --vertical <name>")
     return 0
 
 
@@ -75,7 +74,7 @@ def cmd_config(settings: Settings, args) -> int:
 def cmd_doctor(settings: Settings, args) -> int:
     db.init_db(settings.db_path)
     llm = build_llm(settings)
-    print("Resume Firm doctor")
+    print("Career Firm doctor")
     print(f"  python: {sys.version.split()[0]}")
     print(f"  data: {settings.data_dir}")
     print(f"  database: {settings.db_path}")
@@ -248,24 +247,6 @@ def _run_job(settings: Settings, job_id: int) -> int:
     return 0
 
 
-def cmd_build(settings: Settings, args) -> int:
-    db.init_db(settings.db_path)
-    print("Running the PM → architect → developer → QA pipeline...")
-    try:
-        result = BuildService(settings).run(args.brief, title=args.title or "")
-    except Exception as exc:
-        print(f"FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
-        return 1
-    print(f"Workflow #{result['workflow_id']}")
-    print(f"  workspace: {result['workspace']}")
-    if result.get("mock"):
-        print("  offline mock: configure a provider for real implementation output")
-    else:
-        qa = result.get("qa", {})
-        print(f"  QA: {'PASS' if qa.get('passed') else 'FAIL'} — {qa.get('summary', '')[:200]}")
-    return 0
-
-
 def cmd_serve(settings: Settings, args) -> int:
     import uvicorn
 
@@ -274,7 +255,7 @@ def cmd_serve(settings: Settings, args) -> int:
     host = args.host or settings.host
     port = args.port or settings.port
     app = create_app(settings)
-    print(f"Resume Firm on http://{host}:{port}")
+    print(f"Career Firm on http://{host}:{port}")
     uvicorn.run(app, host=host, port=port, log_level="info")
     return 0
 
@@ -286,10 +267,6 @@ def cmd_agents(settings: Settings, args) -> int:
         "office_manager": ("Office Manager", prompts.OFFICE_MANAGER),
         "headhunter": ("Headhunter", prompts.HEADHUNTER),
         "resume_writer": ("Resume Writer", prompts.RESUME_WRITER),
-        "product_manager": ("Product Manager", prompts.PM),
-        "architect": ("Architect", prompts.ARCHITECT),
-        "developer": ("Developer", prompts.DEVELOPER),
-        "qa": ("QA", prompts.QA),
     }
     if args.prompt:
         if args.prompt not in roles:
@@ -303,10 +280,10 @@ def cmd_agents(settings: Settings, args) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="resume-firm",
+        prog="career-firm",
         description="Agent-run career firm: import CVs, analyse jobs, generate ATS-ready tailored CVs.",
     )
-    parser.add_argument("--home", help="Data directory (overrides RESUME_FIRM_HOME)")
+    parser.add_argument("--home", help="Data directory (overrides CAREER_FIRM_HOME)")
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("init", help="Initialise the local database and data directories")
@@ -340,10 +317,6 @@ def build_parser() -> argparse.ArgumentParser:
     show_job.add_argument("id", type=int)
     show_job.add_argument("--json", action="store_true")
 
-    build = sub.add_parser("build", help="Run the general PM/architect/developer/QA pipeline")
-    build.add_argument("brief")
-    build.add_argument("--title", default="")
-
     serve = sub.add_parser("serve", help="Run the local web app")
     serve.add_argument("--host", default=None)
     serve.add_argument("--port", type=int, default=None)
@@ -361,7 +334,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 0
     if args.home:
-        os.environ["RESUME_FIRM_HOME"] = args.home
+        os.environ["CAREER_FIRM_HOME"] = args.home
     settings = _apply_stored_settings(Settings.load())
     if args.command == "init":
         return cmd_init(settings, args)
@@ -373,8 +346,6 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_profile(settings, args)
     if args.command == "job":
         return cmd_job(settings, args)
-    if args.command == "build":
-        return cmd_build(settings, args)
     if args.command == "agents":
         return cmd_agents(settings, args)
     if args.command == "serve":

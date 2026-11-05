@@ -7,8 +7,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from resume_firm import db
-from resume_firm.config import Settings
+from career_firm import db
+from career_firm.config import Settings
 
 SAMPLE_CV = """Jane Doe
 VP Engineering | AI Platforms
@@ -54,10 +54,10 @@ Responsibilities:
 
 @pytest.fixture
 def settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Settings:
-    monkeypatch.setenv("RESUME_FIRM_HOME", str(tmp_path / "data"))
-    monkeypatch.setenv("RESUME_FIRM_PROVIDER", "mock")
-    monkeypatch.setenv("RESUME_FIRM_MODEL", "mock")
-    monkeypatch.setenv("RESUME_FIRM_HEURISTIC_FALLBACK", "true")
+    monkeypatch.setenv("CAREER_FIRM_HOME", str(tmp_path / "data"))
+    monkeypatch.setenv("CAREER_FIRM_PROVIDER", "mock")
+    monkeypatch.setenv("CAREER_FIRM_MODEL", "mock")
+    monkeypatch.setenv("CAREER_FIRM_HEURISTIC_FALLBACK", "true")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     settings = Settings.load()

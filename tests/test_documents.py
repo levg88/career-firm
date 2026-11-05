@@ -5,9 +5,9 @@ from pathlib import Path
 from docx import Document
 from pypdf import PdfReader
 
-from resume_firm.documents.extract import extract_text
-from resume_firm.documents.heuristics import parse_cv_heuristic, tailor_heuristic, analyze_job_heuristic
-from resume_firm.documents.render import page_count, render_cv
+from career_firm.documents.extract import extract_text
+from career_firm.documents.heuristics import parse_cv_heuristic, tailor_heuristic, analyze_job_heuristic
+from career_firm.documents.render import page_count, render_cv
 
 
 def _tailored(sample_cv, sample_jd):

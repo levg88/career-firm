@@ -1,16 +1,12 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 import pytest
 from pydantic import BaseModel
 
-from resume_firm import db
-from resume_firm.agents.base import Agent, AgentSpec, Tool, ToolRegistry
-from resume_firm.agents.runner import run_agent
-from resume_firm.agents.tools import Sandbox, make_tools
-from resume_firm.llm.base import LLMClient, LLMResponse, ToolCall, parse_json_object
+from career_firm import db
+from career_firm.agents.base import Agent, AgentSpec, Tool, ToolRegistry
+from career_firm.agents.runner import run_agent
+from career_firm.llm.base import LLMClient, LLMResponse, ToolCall, parse_json_object
 
 
 class ScriptedLLM(LLMClient):
@@ -28,15 +24,20 @@ class Answer(BaseModel):
     ok: bool
 
 
-def test_agent_tool_loop_executes_tool(settings, tmp_path):
-    sandbox = Sandbox(tmp_path)
+def test_agent_tool_loop_executes_tool(settings):
+    calls = []
+
+    def remember(value: str) -> str:
+        calls.append(value)
+        return "ok"
+
     registry = ToolRegistry(
         [
             Tool(
-                name="write_file",
-                description="write",
+                name="remember",
+                description="remember a value",
                 parameters={"type": "object"},
-                handler=sandbox.write_file,
+                handler=remember,
             )
         ]
     )
@@ -44,7 +45,9 @@ def test_agent_tool_loop_executes_tool(settings, tmp_path):
         [
             LLMResponse(
                 text="",
-                tool_calls=[ToolCall(id="1", name="write_file", arguments={"path": "a.txt", "content": "hi"})],
+                tool_calls=[
+                    ToolCall(id="1", name="remember", arguments={"value": "hi"})
+                ],
             ),
             LLMResponse(text='{"ok": true}'),
         ]
@@ -52,7 +55,7 @@ def test_agent_tool_loop_executes_tool(settings, tmp_path):
     agent = Agent(AgentSpec(name="tester", role="tester", system_prompt="Test."), llm, settings, registry)
     result = agent.run("do it", schema=Answer)
     assert result.data == {"ok": True}
-    assert (tmp_path / "a.txt").read_text() == "hi"
+    assert calls == ["hi"]
     assert result.steps == 2
 
 
@@ -68,8 +71,17 @@ def test_agent_retries_invalid_json(settings):
     assert result.data == {"ok": True}
 
 
-def test_agent_reports_unknown_tool(settings, tmp_path):
-    registry = make_tools(Sandbox(tmp_path))
+def test_agent_reports_unknown_tool(settings):
+    registry = ToolRegistry(
+        [
+            Tool(
+                name="known",
+                description="known",
+                parameters={"type": "object"},
+                handler=lambda **_: "ok",
+            )
+        ]
+    )
     llm = ScriptedLLM(
         [
             LLMResponse(text="", tool_calls=[ToolCall(id="1", name="nope", arguments={})]),
@@ -100,14 +112,6 @@ def test_run_agent_persists_audit_record(settings):
         runs = db.list_agent_runs(conn, workflow_run_id=workflow_id)
     assert runs[0]["role"] == "tester"
     assert runs[0]["status"] == "ok"
-
-
-def test_sandbox_blocks_escape(tmp_path):
-    sandbox = Sandbox(tmp_path)
-    with pytest.raises(Exception):
-        sandbox.resolve("../outside.txt")
-    with pytest.raises(Exception):
-        sandbox.run_command("curl https://example.com")
 
 
 def test_parse_json_object_variants():

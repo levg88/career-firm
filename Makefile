@@ -8,10 +8,10 @@ test:
 	.venv/bin/pytest -q
 
 init:
-	.venv/bin/resume-firm init
+	.venv/bin/career-firm init
 
 doctor:
-	.venv/bin/resume-firm doctor
+	.venv/bin/career-firm doctor
 
 serve:
-	.venv/bin/resume-firm serve
+	.venv/bin/career-firm serve

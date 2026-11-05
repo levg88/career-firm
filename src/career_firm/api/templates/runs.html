@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Runs · Resume Firm{% endblock %}
+{% block title %}Runs · Career Firm{% endblock %}
 {% block content %}
 <h1>Audit trail</h1>
 <p class="lead">
@@ -21,9 +21,7 @@
         <td><span class="badge {{ wf.status }}">{{ wf.status }}</span></td>
         <td class="small muted">{{ wf.created_at[:16].replace("T", " ") }}</td>
         <td>
-          {% if wf.kind == "build" %}
-            <a class="small" href="/build/{{ wf.id }}">Open →</a>
-          {% elif wf.input.get("job_id") %}
+          {% if wf.input.get("job_id") %}
             <a class="small" href="/jobs/{{ wf.input.get('job_id') }}">Open job →</a>
           {% endif %}
         </td>
@@ -57,6 +55,6 @@
   </table>
 </div>
 {% else %}
-<div class="empty">No agent calls yet. Run a CV tailoring or a build.</div>
+<div class="empty">No agent calls yet. Tailor a CV to create the first audit record.</div>
 {% endif %}
 {% endblock %}

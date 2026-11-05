@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from resume_firm import db
-from resume_firm.documents.render import render_cv
-from resume_firm.documents.heuristics import analyze_job_heuristic, parse_cv_heuristic, tailor_heuristic
+from career_firm import db
+from career_firm.documents.render import render_cv
+from career_firm.documents.heuristics import analyze_job_heuristic, parse_cv_heuristic, tailor_heuristic
 
 
 def test_repository_round_trip(settings, profile_id, sample_cv, sample_jd, tmp_path):

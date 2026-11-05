@@ -42,7 +42,7 @@ def _int(name: str, default: int) -> int:
 
 
 def _default_provider() -> str:
-    explicit = os.getenv("RESUME_FIRM_PROVIDER")
+    explicit = os.getenv("CAREER_FIRM_PROVIDER")
     if explicit:
         return explicit.strip().lower()
     if os.getenv("OPENAI_API_KEY"):
@@ -53,7 +53,7 @@ def _default_provider() -> str:
 
 
 def _default_model(provider: str) -> str:
-    explicit = os.getenv("RESUME_FIRM_MODEL")
+    explicit = os.getenv("CAREER_FIRM_MODEL")
     if explicit:
         return explicit
     return {
@@ -116,13 +116,13 @@ class Settings:
         if repo_root != cwd:
             _load_dotenv(repo_root / ".env")
 
-        home = Path(os.getenv("RESUME_FIRM_HOME", "./data")).expanduser().resolve()
+        home = Path(os.getenv("CAREER_FIRM_HOME", "./data")).expanduser().resolve()
         provider = _default_provider()
         base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
         if provider == "ollama":
             base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1").rstrip("/")
         env_configured = bool(
-            os.getenv("RESUME_FIRM_PROVIDER")
+            os.getenv("CAREER_FIRM_PROVIDER")
             or os.getenv("OPENAI_API_KEY")
             or os.getenv("ANTHROPIC_API_KEY")
         )
@@ -144,19 +144,19 @@ class Settings:
             ollama_base_url=os.getenv(
                 "OLLAMA_BASE_URL", "http://localhost:11434/v1"
             ).rstrip("/"),
-            temperature=_float("RESUME_FIRM_TEMPERATURE", 0.2),
-            max_tokens=_int("RESUME_FIRM_MAX_TOKENS", 8192),
-            timeout=_float("RESUME_FIRM_TIMEOUT", 180),
-            max_agent_steps=_int("RESUME_FIRM_MAX_STEPS", 12),
+            temperature=_float("CAREER_FIRM_TEMPERATURE", 0.2),
+            max_tokens=_int("CAREER_FIRM_MAX_TOKENS", 8192),
+            timeout=_float("CAREER_FIRM_TIMEOUT", 180),
+            max_agent_steps=_int("CAREER_FIRM_MAX_STEPS", 12),
             allow_heuristic_fallback=_bool(
-                "RESUME_FIRM_HEURISTIC_FALLBACK", True
+                "CAREER_FIRM_HEURISTIC_FALLBACK", True
             ),
-            max_upload_mb=_int("RESUME_FIRM_MAX_UPLOAD_MB", 15),
-            host=os.getenv("RESUME_FIRM_HOST", "127.0.0.1"),
-            port=_int("RESUME_FIRM_PORT", 8765),
-            default_language=os.getenv("RESUME_FIRM_LANGUAGE", "en"),
-            font_path=os.getenv("RESUME_FIRM_FONT_PATH", ""),
-            setup_complete=_bool("RESUME_FIRM_SETUP_COMPLETE", env_configured),
+            max_upload_mb=_int("CAREER_FIRM_MAX_UPLOAD_MB", 15),
+            host=os.getenv("CAREER_FIRM_HOST", "127.0.0.1"),
+            port=_int("CAREER_FIRM_PORT", 8765),
+            default_language=os.getenv("CAREER_FIRM_LANGUAGE", "en"),
+            font_path=os.getenv("CAREER_FIRM_FONT_PATH", ""),
+            setup_complete=_bool("CAREER_FIRM_SETUP_COMPLETE", env_configured),
         )
         settings.ensure_dirs()
         return settings

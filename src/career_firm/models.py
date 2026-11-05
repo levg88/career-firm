@@ -352,23 +352,3 @@ class TailoredCV(BaseModel):
                 for k in ("email", "phone", "location", "linkedin", "website")
             }
         return data
-
-
-class QAReport(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    passed: bool = False
-    summary: str = ""
-    issues: list[str] = Field(default_factory=list)
-    tests_run: list[str] = Field(default_factory=list)
-    recommendation: str = ""
-
-    @field_validator("issues", "tests_run", mode="before")
-    @classmethod
-    def _lists(cls, value: Any) -> list[str]:
-        return _as_list(value)
-
-    @field_validator("summary", "recommendation", mode="before")
-    @classmethod
-    def _strings(cls, value: Any) -> str:
-        return _coerce_text(value)

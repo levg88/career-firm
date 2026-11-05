@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from resume_firm import db
-from resume_firm.api.app import create_app
+from career_firm import db
+from career_firm.api.app import create_app
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def client(settings):
 
 
 def test_pages_render(client):
-    for path in ("/", "/profile", "/jobs", "/jobs/new", "/runs", "/build"):
+    for path in ("/", "/profile", "/jobs", "/jobs/new", "/runs", "/settings"):
         response = client.get(path)
         assert response.status_code == 200, path
     health = client.get("/health").json()
@@ -82,18 +82,3 @@ def test_upload_validation(client):
     )
     assert response.status_code == 400
     assert "Unsupported file type" in response.text
-
-
-def test_mock_build_via_api(client):
-    response = client.post(
-        "/build",
-        data={"brief": "A local CLI that tracks reading list items", "title": "Reading list"},
-        follow_redirects=False,
-    )
-    assert response.status_code == 303
-    location = response.headers["location"]
-    detail = client.get(location)
-    assert detail.status_code == 200
-    assert "product_spec.md" in detail.text
-    assert "qa_report.md" in detail.text
-    assert client.get(location + "/status").json()["status"] == "done"

@@ -4,9 +4,9 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-from resume_firm import db
-from resume_firm.documents.extract import extract_text
-from resume_firm.orchestrator.firm import FirmService
+from career_firm import db
+from career_firm.documents.extract import extract_text
+from career_firm.orchestrator.firm import FirmService
 
 
 def test_firm_end_to_end_mock(settings, profile_id, sample_cv, sample_jd, tmp_path):

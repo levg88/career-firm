@@ -16,7 +16,6 @@ from ..config import Settings, default_base_url_for, default_model_for
 from ..documents.extract import ExtractionError, extract_text
 from ..llm import build_llm
 from ..llm.mock import MockClient
-from ..orchestrator.build import BuildService
 from ..orchestrator.firm import FirmService
 
 ALLOWED_UPLOADS = {".docx", ".pdf", ".txt", ".md", ".markdown"}
@@ -85,13 +84,6 @@ def _run_tailor(settings: Settings, job_id: int) -> None:
         pass
 
 
-def _run_build(settings: Settings, workflow_id: int, brief: str) -> None:
-    try:
-        BuildService(settings).execute(workflow_id, brief)
-    except Exception:
-        pass
-
-
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.load()
     settings.ensure_dirs()
@@ -105,7 +97,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     except OSError:
         pass
 
-    app = FastAPI(title="Resume Firm", version="0.1.0")
+    app = FastAPI(title="Career Firm", version="0.2.0")
     app.state.settings = settings
 
     base = Path(__file__).parent
@@ -515,7 +507,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             filename=path.name,
         )
 
-    # ── runs / build pipeline ───────────────────────────────────────────────
+    # ── audit trail ───────────────────────────────────────────────────────────
     @app.get("/runs", response_class=HTMLResponse)
     def runs(request: Request):
         with db.session(settings.db_path) as conn:
@@ -527,62 +519,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             workflows=workflows,
             agent_runs=agent_runs,
             active="runs",
-        )
-
-    @app.get("/build", response_class=HTMLResponse)
-    def build_view(request: Request):
-        with db.session(settings.db_path) as conn:
-            workflows = [w for w in db.list_workflows(conn, limit=30) if w["kind"] == "build"]
-        return page(request, "build.html", workflows=workflows, active="build")
-
-    @app.post("/build")
-    def create_build(request: Request, background: BackgroundTasks, brief: str = Form(...), title: str = Form("")):
-        if not brief.strip():
-            with db.session(settings.db_path) as conn:
-                workflows = [w for w in db.list_workflows(conn, limit=30) if w["kind"] == "build"]
-            return page(
-                request,
-                "build.html",
-                workflows=workflows,
-                error="Describe the app you want to build.",
-                active="build",
-                status_code=400,
-            )
-        with db.session(settings.db_path) as conn:
-            workflow_id = db.create_workflow(
-                conn,
-                kind="build",
-                title=title.strip() or brief.strip()[:80],
-                input_payload={"brief": brief.strip()},
-            )
-        background.add_task(_run_build, settings, workflow_id, brief.strip())
-        return RedirectResponse(f"/build/{workflow_id}", status_code=303)
-
-    @app.get("/build/{workflow_id}", response_class=HTMLResponse)
-    def build_detail(request: Request, workflow_id: int):
-        with db.session(settings.db_path) as conn:
-            workflow = db.get_workflow(conn, workflow_id)
-            if not workflow:
-                raise HTTPException(status_code=404, detail="Build run not found")
-            artifacts = db.list_artifacts(conn, workflow_id)
-            agent_runs = db.list_agent_runs(conn, workflow_run_id=workflow_id)
-        return page(
-            request,
-            "build_detail.html",
-            workflow=workflow,
-            artifacts=artifacts,
-            agent_runs=agent_runs,
-            active="build",
-        )
-
-    @app.get("/build/{workflow_id}/status")
-    def build_status(workflow_id: int):
-        with db.session(settings.db_path) as conn:
-            workflow = db.get_workflow(conn, workflow_id)
-        if not workflow:
-            raise HTTPException(status_code=404, detail="Build run not found")
-        return JSONResponse(
-            {"id": workflow["id"], "status": workflow["status"], "error": workflow["error"]}
         )
 
     return app
