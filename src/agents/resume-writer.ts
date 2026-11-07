@@ -195,19 +195,28 @@ export class ResumeWriter {
         }
       }
 
+      // Deduplicate by company+title (in case LLM returned duplicates)
+      const seen = new Set<string>();
+      const deduped = merged.filter((exp) => {
+        const key = exp.company + '|' + exp.title;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
       // Reorder to match source CV chronology: source order takes precedence.
       // Build a lookup of source index by company+title for ordering.
       const sourceOrder = new Map<string, number>();
       parsed.experience.forEach((exp, idx) => {
         sourceOrder.set(exp.company + '|' + exp.title, idx);
       });
-      merged.sort((a, b) => {
+      deduped.sort((a, b) => {
         const aIdx = sourceOrder.get(a.company + '|' + a.title) ?? Infinity;
         const bIdx = sourceOrder.get(b.company + '|' + b.title) ?? Infinity;
         return aIdx - bIdx;
       });
 
-      updates.experience = merged;
+      updates.experience = deduped;
     }
 
     if (!cv.education.length && parsed.education.length) updates.education = parsed.education;

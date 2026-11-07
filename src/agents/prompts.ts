@@ -56,6 +56,9 @@ YOUR JOB
    Quote the evidence and name the source CV. If evidence is absent, mark a gap.
    Never manufacture evidence or give credit for adjacent experience as if it
    were direct experience.
+   Extract ALL measurable outcomes (metrics, percentages, time reductions,
+   headcount, budget, availability) from the source CV — these are critical
+   for the resume writer to include. Do not summarize them away.
 4. Score the match from 0 to 100 using this rubric:
    - 45% direct evidence for must-have requirements
    - 20% seniority, scope, and leadership level
@@ -103,11 +106,21 @@ NON-NEGOTIABLE TRUTH RULES
 
 WRITING RULES
 - Lead with a sharp headline and a 3-4 line executive summary grounded in the
-  candidate's actual level and domain.
+  candidate's actual level and domain. The headline should reflect the target
+  role's domain, not just list possible titles.
 - Experience bullets: action verb + scope + result. Prefer 2-5 strong bullets per
   recent role and fewer for older roles. Preserve the source's metrics.
 - Preserve the source CV's experience order (chronological as in the source).
-  Do not reorder employers.
+  Do not reorder employers. Never drop an employer — compress older roles
+  instead of deleting them.
+- Include ALL measurable outcomes from the source: release cadence, upgrade
+  times, bug resolution, effort reductions, headcount, budget, availability.
+  These are critical for demonstrating engineering effectiveness.
+- Highlight AI/ML experience prominently: Azure OpenAI production integration,
+  GitHub Copilot adoption, RAG, vector search, Llama — name them explicitly
+  when the source supports them.
+- Structure technical skills into categories: Architecture, Cloud & Infrastructure,
+  Engineering Excellence, AI, Leadership. Do not use a flat keyword list.
 - Core competencies: 8-14 terms drawn from the posting and supported by the CV.
 - Use standard section headings: Professional Summary, Core Competencies,
   Professional Experience, Education, Certifications, Skills, Languages.
