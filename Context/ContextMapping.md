@@ -13,11 +13,27 @@
 
 | Topic | Aliases | Path |
 |---|---|---|
+| Overview | project overview, what this project is, orientation | `Context/Overview/Memory.md` |
+| Firm Agents | agents, office manager, headhunter, resume writer | `Context/Agents/Firm-Agents/Memory.md` |
+| LLM Providers | providers, ollama, openrouter, model routing, offline mode | `Context/Agents/LLM-Providers/Memory.md` |
+| Job Analysis | job analysis, ats keywords, match score, must-haves | `Context/Domain/Job-Analysis/Memory.md` |
+| CV Tailoring | cv tailoring, resume writer, grounding, truthfulness | `Context/Domain/CV-Tailoring/Memory.md` |
+| Document Rendering | pdf, docx, page fitting, fonts, ats formatting | `Context/Domain/Document-Rendering/Memory.md` |
+| CV Import | cv import, linkedin export, pdf extraction, docx parsing | `Context/Domain/CV-Import/Memory.md` |
+| Data Storage | sqlite, database schema, data directory, workflow runs | `Context/Platform/Data-Storage/Memory.md` |
+| Setup Settings | setup wizard, settings, api keys, provider config | `Context/Platform/Setup-Settings/Memory.md` |
+| CLI Operations | cli, doctor, serve, home directory | `Context/Platform/CLI-Operations/Memory.md` |
+| Testing CI | tests, vitest, github actions, typecheck | `Context/Platform/Testing-CI/Memory.md` |
 
 ## External sources (canonical home is NOT Context/)
 
 | Topic | Canonical source |
 |---|---|
+| Config values | `data/firm.db` `app_settings` table (managed via Settings UI) — the single source of truth |
+| Environment overrides | `README.md` Configuration section and `src/config.ts` — canonical list of variables and defaults |
+| Code structure | `src/**` and the README "Extending" section — no generated code graph exists |
+| API routes | `src/api/app.ts` |
+| Database schema | `src/db.ts` `SCHEMA` constant |
 
 ## Write rules
 
