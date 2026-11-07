@@ -1,3 +1,10 @@
+/**
+ * @file Express application: routes and web UI for the career firm.
+ *
+ * Builds the Express app with all pages and API endpoints (setup, profile, jobs,
+ * generated CV downloads, audit trail) and the shared middleware.
+ */
+
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -126,6 +133,7 @@ async function runTailor(settings: Settings, jobId: number): Promise<void> {
   }
 }
 
+/** Build and configure the Express application. */
 export function createApp(initialSettings?: Settings): express.Express {
   const settings = initialSettings ?? Settings.load();
   settings.ensureDirs();

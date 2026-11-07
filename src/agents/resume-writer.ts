@@ -1,3 +1,11 @@
+/**
+ * @file Resume Writer agent: tailors a CV to a job and runs grounding checks.
+ *
+ * The {@link ResumeWriter} class produces a {@link TailoredCV} from a job
+ * analysis and a selected source CV, normalising the output and removing
+ * unsupported keywords. Supports LLM and deterministic heuristic modes.
+ */
+
 import { Settings } from '../config';
 import { tailorHeuristic } from '../documents/heuristics';
 import { LLMClient } from '../llm/base';
@@ -14,6 +22,9 @@ import { removeUnsupportedKeywords, validateGrounding } from './grounding';
 import { RESUME_WRITER } from './prompts';
 import { recordHeuristicRun, runAgent } from './runner';
 
+/**
+ * Options for {@link ResumeWriter.write}.
+ */
 export interface WriteOptions {
   analysis: JobAnalysis;
   parsed: ParsedCV;
@@ -34,6 +45,10 @@ export class ResumeWriter {
     this.llm = llm;
   }
 
+  /**
+   * Write a tailored CV for the job, returning the CV and grounding warnings.
+   * @param options Writing inputs including analysis, parsed CV, and source text.
+   */
   async write(options: WriteOptions): Promise<[TailoredCV, string[]]> {
     const { analysis, parsed, sourceText, context, language, workflowRunId = null } = options;
 
@@ -105,6 +120,10 @@ export class ResumeWriter {
     return [cv, warnings];
   }
 
+  /**
+   * Normalise a generated CV: fill missing fields from the source, preserve all
+   * employers, and restore source chronology.
+   */
   private normalise(cv: TailoredCV, parsed: ParsedCV, language: string): TailoredCV {
     const updates: Partial<TailoredCV> = {};
     if (!cv.name) updates.name = parsed.name;
@@ -132,6 +151,8 @@ export class ResumeWriter {
       const merged: ExperienceItem[] = [];
       const usedSourceIndices = new Set<number>();
 
+      // Match each generated experience to a source entry by company+title,
+      // then pad with any unmatched source experiences so no employer is dropped.
       for (const generated of cv.experience) {
         // Find the best matching source experience
         let bestIndex = -1;

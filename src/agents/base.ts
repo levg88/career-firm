@@ -1,8 +1,22 @@
+/**
+ * @file Agent runtime: provider-agnostic tool-calling agent loop, tool registry,
+ *       and shared agent contracts.
+ *
+ * Defines the {@link Agent} class that drives a multi-step conversation with an
+ * LLM, dispatching tool calls until a final answer (optionally JSON-validated)
+ * is produced. Also defines {@link ToolRegistry}, {@link Tool}, {@link AgentSpec},
+ * {@link AgentResult}, and the {@link AgentError} type used across the firm.
+ */
+
 import { toJSONSchema, type ZodType } from 'zod';
 
 import { Settings } from '../config';
 import { LLMClient, LLMError, LLMResponse, parseJsonObject } from '../llm/base';
 
+/**
+ * Error thrown when an agent fails to produce a valid final answer within
+ * its step budget or when JSON parsing ultimately fails.
+ */
 export class AgentError extends Error {
   constructor(message: string) {
     super(message);
@@ -10,6 +24,10 @@ export class AgentError extends Error {
   }
 }
 
+/**
+ * A callable tool exposed to an agent. The handler receives parsed arguments
+ * and returns either a string or a JSON-serialisable value.
+ */
 export interface Tool {
   name: string;
   description: string;
@@ -17,6 +35,11 @@ export interface Tool {
   handler: (args: Record<string, any>) => unknown;
 }
 
+/**
+ * Convert a {@link Tool} into the JSON-schema function descriptor expected by
+ * LLM providers' tool-calling APIs.
+ * @param tool The tool to describe.
+ */
 export function toolSchema(tool: Tool): Record<string, unknown> {
   return {
     type: 'function',
@@ -28,6 +51,10 @@ export function toolSchema(tool: Tool): Record<string, unknown> {
   };
 }
 
+/**
+ * Registry of named tools available to an agent. Executes tool calls safely,
+ * returning JSON-encoded results (or errors) truncated to a sane size.
+ */
 export class ToolRegistry {
   private tools = new Map<string, Tool>();
 
@@ -59,6 +86,9 @@ export class ToolRegistry {
   }
 }
 
+/**
+ * Static configuration describing an agent's identity and prompting.
+ */
 export interface AgentSpec {
   name: string;
   role: string;
@@ -67,6 +97,9 @@ export interface AgentSpec {
   maxTokens?: number | null;
 }
 
+/**
+ * Outcome of a single {@link Agent.run} invocation, including token usage.
+ */
 export interface AgentResult {
   text: string;
   data: Record<string, any> | null;
@@ -84,7 +117,10 @@ function schemaJson(schema: ZodType): string {
   }
 }
 
-/** A small provider-agnostic tool-calling agent. */
+/**
+ * A small provider-agnostic tool-calling agent. Runs a multi-step loop,
+ * dispatching tool calls and (optionally) validating JSON output.
+ */
 export class Agent {
   spec: AgentSpec;
   llm: LLMClient;
@@ -98,6 +134,11 @@ export class Agent {
     this.tools = tools ?? new ToolRegistry();
   }
 
+  /**
+   * Run the agent on a task.
+   * @param task The user-facing task description.
+   * @param options Optional context, output schema, and step limit.
+   */
   async run(
     task: string,
     options: { context?: string; schema?: ZodType; maxSteps?: number } = {},
@@ -139,6 +180,8 @@ export class Agent {
       promptTokens += llmResponse.promptTokens;
       completionTokens += llmResponse.completionTokens;
 
+      // The model requested tool calls: record them as an assistant turn and
+      // append each tool result before the next loop iteration.
       if (llmResponse.toolCalls.length) {
         const assistantCalls = llmResponse.toolCalls.map((call) => ({
           id: call.id,
@@ -186,6 +229,7 @@ export class Agent {
           completionTokens,
           response: llmResponse,
         };
+      // Retry once if the model returned non-JSON; otherwise surface the error.
       } catch (error) {
         jsonAttempts += 1;
         if (jsonAttempts > 1) {

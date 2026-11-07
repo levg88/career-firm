@@ -1,3 +1,10 @@
+/**
+ * @file Command-line interface for the career firm.
+ *
+ * Parses argv and dispatches to subcommands (init, config, doctor, profile, job,
+ * serve, agents). Mirrors the web app's workflows for terminal use.
+ */
+
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -392,6 +399,7 @@ commands:
   agents               List agent roles or print a role prompt (--prompt ROLE)
 `;
 
+/** CLI entry point: parse args and dispatch to subcommands. */
 export async function main(argv: string[]): Promise<number> {
   const global = parseArguments(argv);
   let positionals = global.positionals;

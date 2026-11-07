@@ -1,3 +1,9 @@
+/**
+ * @file Server entry point.
+ *
+ * Starts the HTTP server using {@link createApp} and the configured host/port.
+ */
+
 import http from 'node:http';
 
 import { createApp } from './api/app';
@@ -10,6 +16,7 @@ export interface StartServerOptions {
   port?: number;
 }
 
+/** Start the HTTP server and return the listening instance. */
 export function startServer(options: StartServerOptions = {}): http.Server {
   const settings = options.settings ?? applyStoredSettings(Settings.load());
   const app = createApp(settings);

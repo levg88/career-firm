@@ -1,3 +1,11 @@
+/**
+ * @file OpenAI-compatible LLM adapter.
+ *
+ * {@link OpenAICompatClient} implements {@link LLMClient} against any
+ * OpenAI-compatible chat completions endpoint, with retry and compatibility
+ * handling for parameter differences.
+ */
+
 import {
   CompleteOptions,
   LLMClient,
@@ -9,6 +17,7 @@ import {
   sleep,
 } from './base';
 
+/** LLM client for OpenAI-compatible chat completion endpoints. */
 export class OpenAICompatClient extends LLMClient {
   provider: string;
   model: string;
@@ -37,12 +46,14 @@ export class OpenAICompatClient extends LLMClient {
     this.provider = options.provider ?? 'openai';
   }
 
+  /** Build request headers including auth. */
   private headers(): Record<string, string> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (this.apiKey) headers.Authorization = `Bearer ${this.apiKey}`;
     return headers;
   }
 
+  /** Send a chat completion request with compatibility handling. */
   async complete(messages: Record<string, any>[], options: CompleteOptions = {}): Promise<LLMResponse> {
     let payload: Record<string, any> = {
       model: this.model,
@@ -91,6 +102,7 @@ export class OpenAICompatClient extends LLMClient {
     });
   }
 
+  /** POST the payload with retries and parameter fallbacks. */
   private async post(initialPayload: Record<string, any>): Promise<Record<string, any>> {
     const url = `${this.baseUrl}/chat/completions`;
     let payload = initialPayload;

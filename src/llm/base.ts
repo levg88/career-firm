@@ -1,3 +1,12 @@
+/**
+ * @file LLM client interface and shared helpers.
+ *
+ * Defines the abstract {@link LLMClient}, the {@link LLMResponse}/{@link ToolCall}
+ * contracts, and helpers for JSON parsing ({@link parseJsonObject}) and content
+ * normalisation ({@link contentAsText}).
+ */
+
+/** Error thrown by LLM adapters for transport/parse failures. */
 export class LLMError extends Error {
   constructor(message: string) {
     super(message);
@@ -5,12 +14,14 @@ export class LLMError extends Error {
   }
 }
 
+/** A tool call requested by the model. */
 export interface ToolCall {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
 }
 
+/** Normalised response returned by any LLM client. */
 export interface LLMResponse {
   text: string;
   toolCalls: ToolCall[];
@@ -19,6 +30,7 @@ export interface LLMResponse {
   raw: Record<string, unknown>;
 }
 
+/** Options for {@link LLMClient.complete}. */
 export interface CompleteOptions {
   tools?: Record<string, unknown>[];
   temperature?: number | null;
@@ -26,12 +38,14 @@ export interface CompleteOptions {
   jsonMode?: boolean;
 }
 
+/** Abstract LLM client interface shared by all providers. */
 export abstract class LLMClient {
   abstract provider: string;
   abstract model: string;
   abstract complete(messages: Record<string, any>[], options?: CompleteOptions): Promise<LLMResponse>;
 }
 
+/** Build an {@link LLMResponse} with sensible defaults. */
 export function response(values: Partial<LLMResponse> = {}): LLMResponse {
   return {
     text: values.text ?? '',
@@ -44,6 +58,7 @@ export function response(values: Partial<LLMResponse> = {}): LLMResponse {
 
 const FENCE_RE = /^\s*```(?:json|JSON)?\s*|\s*```\s*$/gm;
 
+/** Parse a JSON object from (possibly fenced) model output. */
 export function parseJsonObject(text: string): Record<string, any> {
   if (!text || !text.trim()) {
     throw new LLMError('The model returned an empty response where JSON was required.');
@@ -81,6 +96,7 @@ export function parseJsonObject(text: string): Record<string, any> {
   throw new LLMError(`Could not parse JSON from model response: ${snippet}`);
 }
 
+/** Coerce message content (string/array/blocks) into plain text. */
 export function contentAsText(content: unknown): string {
   if (content === null || content === undefined) return '';
   if (typeof content === 'string') return content;
@@ -102,6 +118,7 @@ export function contentAsText(content: unknown): string {
   return String(content);
 }
 
+/** Promise-based delay helper. */
 export async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }

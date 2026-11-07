@@ -1,3 +1,10 @@
+/**
+ * @file Offline mock LLM client.
+ *
+ * {@link MockClient} returns canned responses so the firm can run without a
+ * configured provider or network access.
+ */
+
 import { CompleteOptions, LLMClient, LLMResponse, contentAsText, response } from './base';
 
 /** Offline provider used for demos and tests. */

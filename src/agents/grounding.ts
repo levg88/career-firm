@@ -1,5 +1,15 @@
+/**
+ * @file Deterministic truthfulness checks for generated CVs.
+ *
+ * Provides {@link validateGrounding} and {@link removeUnsupportedKeywords}, which
+ * compare a tailored CV against the source CV/context and flag employers, dates,
+ * metrics, contact details, claims, and ATS keywords that are not supported by
+ * the source. These act as a safety net on top of the LLM's own constraints.
+ */
+
 import type { JobAnalysis, TailoredCV } from '../models';
 
+/** Normalise text for fuzzy comparison (lower-case, unify punctuation, collapse whitespace). */
 function norm(text: string): string {
   let value = (text || '').toLowerCase();
   value = value.replace(/–/g, '-').replace(/—/g, '-').replace(/’/g, "'");
@@ -7,11 +17,13 @@ function norm(text: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+/** Extract all numeric tokens from text into a set for comparison. */
 function numbers(text: string): Set<string> {
   const cleaned = (text || '').replace(/,/g, '');
   return new Set(cleaned.match(/\d+(?:\.\d+)?/g) ?? []);
 }
 
+/** Check whether a company name is supported by the corpus (exact or token overlap). */
 function companySupported(company: string, corpusNorm: string): boolean {
   const companyNorm = norm(company);
   if (!companyNorm) return true;
@@ -115,6 +127,10 @@ export function validateGrounding(
   return unique.slice(0, 40);
 }
 
+/**
+ * Strip ATS keywords that are not supported by the source text/context.
+ * @returns A new tailored CV with the filtered keyword list.
+ */
 export function removeUnsupportedKeywords(
   cv: TailoredCV,
   sourceText: string,

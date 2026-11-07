@@ -1,3 +1,11 @@
+/**
+ * @file Office Manager agent: parses a client CV into a structured record.
+ *
+ * The {@link OfficeManager} class turns raw CV text into a {@link ParsedCV},
+ * preserving facts verbatim. Also builds a compact profile digest for downstream
+ * agents. Supports LLM and deterministic heuristic modes.
+ */
+
 import path from 'node:path';
 
 import { Settings } from '../config';
@@ -20,6 +28,11 @@ export class OfficeManager {
     this.llm = llm;
   }
 
+  /**
+   * Parse a CV's raw text into a structured {@link ParsedCV}.
+   * @param text Raw CV text.
+   * @param options Optional filename and workflow run id for audit logging.
+   */
   async parseCv(
     text: string,
     options: { filename?: string; workflowRunId?: number | null } = {},

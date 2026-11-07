@@ -1,3 +1,10 @@
+/**
+ * @file Barrel export for the agents module.
+ *
+ * Re-exports the firm's agents, agent runtime helpers, prompts, and grounding
+ * utilities so callers can import them from a single entry point.
+ */
+
 export { OfficeManager } from './office-manager';
 export { Headhunter } from './headhunter';
 export { ResumeWriter } from './resume-writer';

@@ -1,9 +1,20 @@
+/**
+ * @file Agent runner and audit logging.
+ *
+ * {@link runAgent} executes an agent and persists a complete audit record of
+ * the call (input, output, tokens, status). {@link recordHeuristicRun} records
+ * deterministic fallbacks so the audit trail stays complete.
+ */
+
 import type { ZodType } from 'zod';
 
 import type { Settings } from '../config';
 import * as db from '../db';
 import type { Agent, AgentResult } from './base';
 
+/**
+ * Options for {@link runAgent}.
+ */
 export interface RunAgentOptions {
   workflow: string;
   role: string;
@@ -66,6 +77,9 @@ export async function runAgent(
   return result;
 }
 
+/**
+ * Options for {@link recordHeuristicRun}.
+ */
 export interface RecordHeuristicOptions {
   workflow: string;
   role: string;

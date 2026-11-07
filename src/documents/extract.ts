@@ -1,9 +1,17 @@
+/**
+ * @file Text extraction from DOCX/PDF/TXT/Markdown files.
+ *
+ * Provides {@link extractText} and format-specific extractors plus {@link cleanText}
+ * and {@link excerpt} helpers used when importing CVs and job descriptions.
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 
 import mammoth from 'mammoth';
 import { PDFParse } from 'pdf-parse';
 
+/** Error thrown when a document cannot be read or parsed. */
 export class ExtractionError extends Error {
   constructor(message: string) {
     super(message);
@@ -11,6 +19,7 @@ export class ExtractionError extends Error {
   }
 }
 
+/** Normalise extracted text: unify line endings, collapse whitespace, trim. */
 export function cleanText(text: string): string {
   let value = String(text ?? '');
   value = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -21,6 +30,7 @@ export function cleanText(text: string): string {
   return value.trim();
 }
 
+/** Extract plain text from a DOCX file. */
 export async function extractDocx(file: string): Promise<string> {
   try {
     const result = await mammoth.extractRawText({ path: file });
@@ -31,6 +41,7 @@ export async function extractDocx(file: string): Promise<string> {
   }
 }
 
+/** Extract plain text from a PDF file. */
 export async function extractPdf(file: string): Promise<string> {
   let parser: PDFParse | null = null;
   try {
@@ -51,6 +62,7 @@ export async function extractPdf(file: string): Promise<string> {
   }
 }
 
+/** Extract text from a file based on its extension. */
 export async function extractText(file: string): Promise<string> {
   const suffix = path.extname(file).toLowerCase();
   if (suffix === '.docx') return extractDocx(file);
@@ -73,6 +85,7 @@ export async function extractText(file: string): Promise<string> {
   );
 }
 
+/** Return a cleaned, length-limited excerpt of text. */
 export function excerpt(text: string, limit = 12000): string {
   const value = cleanText(text);
   if (value.length <= limit) return value;

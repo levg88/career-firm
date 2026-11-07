@@ -1,3 +1,10 @@
+/**
+ * @file PDF and DOCX rendering for tailored CVs.
+ *
+ * Renders a {@link TailoredCV} to ATS-friendly PDF and DOCX files, shrinking
+ * the layout until it fits the configured page limit.
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -128,6 +135,7 @@ const pt = (points: number): number => Math.round(points * 20); // twips
 const halfPoints = (points: number): number => Math.max(2, Math.round(points * 2));
 const inches = (value: number): number => Math.round(value * 1440);
 
+/** Render a tailored CV to a DOCX file at the given scale. */
 export async function renderDocx(cv: TailoredCV, file: string, scale = 1.0): Promise<string> {
   fs.mkdirSync(path.dirname(file), { recursive: true });
 
@@ -365,6 +373,7 @@ const HELVETICA: Record<string, string> = {
   BI: 'Helvetica-BoldOblique',
 };
 
+/** Render a tailored CV to a PDF file at the given scale. */
 export async function renderPdf(
   cv: TailoredCV,
   file: string,
@@ -508,6 +517,7 @@ export async function renderPdf(
   return file;
 }
 
+/** Count the pages in a rendered PDF file. */
 export async function pageCount(file: string): Promise<number> {
   try {
     const bytes = fs.readFileSync(file);
@@ -526,6 +536,9 @@ export interface RenderResult {
 }
 
 /** Render matching DOCX + PDF, shrinking until the PDF fits maxPages. */
+/**
+ * Render matching DOCX + PDF, shrinking until the PDF fits maxPages.
+ */
 export async function renderCv(
   cv: TailoredCV,
   outDir: string,
@@ -540,6 +553,7 @@ export async function renderCv(
 
   let chosenScale = 1.0;
   let pages = 0;
+  // Try progressively smaller scales until the PDF fits within maxPages.
   for (const scale of [1.0, 0.95, 0.9, 0.86, 0.82]) {
     await renderPdf(cv, pdfPath, scale, options.fontPath);
     pages = await pageCount(pdfPath);

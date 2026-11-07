@@ -1,3 +1,10 @@
+/**
+ * @file LLM client factory.
+ *
+ * {@link buildLlm} constructs the appropriate {@link LLMClient} from {@link Settings},
+ * falling back to {@link MockClient} when no provider/key is configured.
+ */
+
 import { Settings } from '../config';
 import { AnthropicClient } from './anthropic';
 import { LLMClient, LLMError } from './base';
@@ -11,6 +18,7 @@ export { OpenAICompatClient } from './openai-compat';
 export { AnthropicClient } from './anthropic';
 export { parseJsonObject } from './base';
 
+/** Build the appropriate LLM client from settings. */
 export function buildLlm(settings: Settings): LLMClient {
   const provider = settings.provider;
   if (provider === 'mock') {

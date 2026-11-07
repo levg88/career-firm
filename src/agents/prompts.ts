@@ -1,4 +1,12 @@
 /**
+ * @file System prompts for the career-firm agents.
+ *
+ * Exports the {@link OFFICE_MANAGER}, {@link HEADHUNTER}, and {@link RESUME_WRITER}
+ * system prompts. Prompts focus on judgement and truthfulness; the JSON schema is
+ * appended automatically by the agent runtime.
+ */
+
+/**
  * Role prompts for the career-firm agents.
  *
  * Prompts are deliberately explicit about truthfulness and ATS constraints. The

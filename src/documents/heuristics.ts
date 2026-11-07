@@ -1,3 +1,11 @@
+/**
+ * @file Heuristic parsing, scoring, and deterministic tailoring.
+ *
+ * Contains regex-based CV parsing ({@link parseCvHeuristic}), job analysis
+ * ({@link analyzeJobHeuristic}), deterministic CV tailoring ({@link tailorHeuristic}),
+ * language detection, and candidate digest construction.
+ */
+
 import {
   type ContactInfo,
   type EducationItem,
@@ -111,6 +119,7 @@ const SYNONYMS: Record<string, string> = {
 };
 
 /** Python's round() uses banker's rounding; scores must match the Python build. */
+/** Python-style banker's rounding to match the Python build. */
 export function pyRound(value: number): number {
   const floor = Math.floor(value);
   const diff = value - floor;
@@ -262,6 +271,7 @@ function splitHeader(rawParts: string[]): [string, string, string] {
   return [company, title, location];
 }
 
+// Group CV lines into per-role blocks, splitting when a new date range appears.
 function splitExperienceBlocks(lines: string[]): string[][] {
   const blocks: string[][] = [];
   let current: string[] = [];
@@ -317,6 +327,7 @@ function parseExperience(lines: string[]): ExperienceItem[] {
       }
     }
 
+    // Collect bullet lines after the date line; trailing text becomes bullets.
     const body = [...(suffix ? [suffix] : []), ...block.slice(dateIdx + 1)];
     let bullets = body.filter((line) => line.trim()).map((line) => stripBullet(line).trim());
     let [company, title, location] = splitHeader(headerParts);
@@ -366,6 +377,10 @@ function parseEducation(lines: string[]): EducationItem[] {
   return items.slice(0, 10);
 }
 
+/**
+ * Heuristically parse a CV's text into a {@link ParsedCV} using section
+ * detection and regexes (offline fallback).
+ */
 export function parseCvHeuristic(text: string, fallbackName = ''): ParsedCV {
   const cleaned = cleanText(text);
   const sections = splitSections(cleaned);
@@ -575,6 +590,7 @@ function bestEvidence(requirement: string, candidateLines: string[]): string {
   return parts.join(' ').slice(0, 400);
 }
 
+/** Detect the dominant language of text from script ranges. */
 export function detectLanguage(text: string): string {
   if (/[\u0590-\u05FF]/.test(text)) return 'he';
   if (/[\u0600-\u06FF]/.test(text)) return 'ar';
@@ -594,6 +610,10 @@ export interface AnalyzeJobOptions {
   fallbackCompany?: string;
 }
 
+/**
+ * Heuristically analyse a job description against candidate text.
+ * Returns a full {@link JobAnalysis} without an LLM.
+ */
 export function analyzeJobHeuristic(
   jobDescription: string,
   candidateText: string,
@@ -762,6 +782,9 @@ function buildCompetencies(
   return chosen.slice(0, limit);
 }
 
+/**
+ * Deterministically tailor a parsed CV to a job analysis using keyword support.
+ */
 export function tailorHeuristic(
   parsed: ParsedCV,
   analysis: JobAnalysis,
@@ -836,6 +859,9 @@ export function tailorHeuristic(
 }
 
 /** Build the evidence corpus handed to the headhunter. */
+/**
+ * Build a compact evidence corpus (context + CVs) for the headhunter.
+ */
 export function candidateDigest(
   context: string,
   cvs: Record<string, any>[],

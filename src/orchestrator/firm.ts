@@ -1,3 +1,10 @@
+/**
+ * @file FirmService: the tailoring pipeline orchestrator.
+ *
+ * Coordinates import, job analysis, CV writing, and rendering into a single
+ * end-to-end {@link FirmService.tailor} workflow with status tracking.
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -61,6 +68,10 @@ export class FirmService {
     this.writer = new ResumeWriter(settings, this.llm);
   }
 
+  /**
+   * Import a CV: parse it and persist the version.
+   * @returns The new CV id, row, and parsed record.
+   */
   async importCv(options: ImportCvOptions): Promise<Record<string, any>> {
     const parsed = await this.office.parseCv(options.rawText, { filename: options.filename });
     const cvId = db.withSession(this.settings.dbPath, (conn) => {
@@ -79,12 +90,16 @@ export class FirmService {
     return { id: cvId, cv, parsed };
   }
 
+  /** Persist the client context text for a profile. */
   setContext(options: { profileId: number; text: string; filename: string | null }): void {
     db.withSession(this.settings.dbPath, (conn) => {
       db.updateProfileContext(conn, options.profileId, options.text, options.filename);
     });
   }
 
+  /**
+   * Run the full tailoring pipeline for a job and return the result.
+   */
   async tailor(jobId: number): Promise<TailorResult> {
     const now = db.now();
     let job: db.Row | null;

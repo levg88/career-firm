@@ -1,3 +1,10 @@
+/**
+ * @file Anthropic LLM adapter.
+ *
+ * {@link AnthropicClient} implements {@link LLMClient} against the Anthropic
+ * Messages API, including tool use, retries, and token accounting.
+ */
+
 import {
   CompleteOptions,
   LLMClient,
@@ -9,6 +16,7 @@ import {
   sleep,
 } from './base';
 
+/** LLM client for the Anthropic Messages API. */
 export class AnthropicClient extends LLMClient {
   provider = 'anthropic';
   model: string;
@@ -35,6 +43,7 @@ export class AnthropicClient extends LLMClient {
     this.timeout = options.timeout ?? 180;
   }
 
+  /** Convert OpenAI-style messages into Anthropic's format. */
   private convertMessages(messages: Record<string, any>[]): [string, Record<string, any>[]] {
     const systemParts: string[] = [];
     const converted: Record<string, any>[] = [];
@@ -95,6 +104,7 @@ export class AnthropicClient extends LLMClient {
     return [systemParts.filter(Boolean).join('\n\n'), converted];
   }
 
+  /** Send a completion request to Anthropic with retries. */
   async complete(messages: Record<string, any>[], options: CompleteOptions = {}): Promise<LLMResponse> {
     const [system, converted] = this.convertMessages(messages);
     const payload: Record<string, any> = {

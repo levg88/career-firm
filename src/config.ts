@@ -1,3 +1,10 @@
+/**
+ * @file Settings and configuration management.
+ *
+ * Defines the {@link Settings} class, environment-based defaults, provider lists,
+ * and helpers for loading/applying configuration from env and the database.
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -17,10 +24,12 @@ export const OPENCODE_FREE_MODELS = [
 const PROVIDERS = ['openai', 'anthropic', 'ollama', 'opencode', 'mock'] as const;
 export type Provider = (typeof PROVIDERS)[number];
 
+/** Type guard for valid provider names. */
 export function isProvider(value: string): value is Provider {
   return (PROVIDERS as readonly string[]).includes(value);
 }
 
+/** Load environment variables from a .env file (without overwriting existing). */
 export function loadDotenv(file: string): void {
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return;
   for (const raw of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
@@ -68,6 +77,7 @@ function defaultProvider(): Provider {
   return 'mock';
 }
 
+/** Default model name for a given provider. */
 export function defaultModelFor(provider: string): string {
   const models: Record<string, string> = {
     openai: 'gpt-4.1',
@@ -79,6 +89,7 @@ export function defaultModelFor(provider: string): string {
   return models[provider] ?? 'gpt-4.1';
 }
 
+/** Default base URL for a given provider. */
 export function defaultBaseUrlFor(provider: string): string {
   const urls: Record<string, string> = {
     openai: 'https://api.openai.com/v1',
@@ -97,6 +108,10 @@ function cleanUrl(value: string): string {
   return value.trim().replace(/\/+$/, '');
 }
 
+/**
+ * Application settings: paths, provider/model selection, and tuning parameters.
+ * Loaded from environment and persisted to the local database.
+ */
 export class Settings {
   home: string;
   dataDir: string;
@@ -174,6 +189,7 @@ export class Settings {
     this.setupComplete = values.setupComplete;
   }
 
+  /** Load settings from environment variables and .env files. */
   static load(): Settings {
     const cwd = process.cwd();
     loadDotenv(path.join(cwd, '.env'));
@@ -224,6 +240,7 @@ export class Settings {
     return settings;
   }
 
+  /** Create the data, storage, and runs directories if missing. */
   ensureDirs(): void {
     for (const dir of [this.dataDir, this.storageDir, this.runsDir]) {
       fs.mkdirSync(dir, { recursive: true });
@@ -233,10 +250,12 @@ export class Settings {
     }
   }
 
+  /** Whether the configured provider is the offline mock. */
   get isMock(): boolean {
     return this.provider === 'mock';
   }
 
+  /** Apply a partial configuration update (from DB or UI). */
   applyConfig(values: Record<string, string>): void {
     if (!values) return;
 
@@ -284,6 +303,7 @@ export class Settings {
     }
   }
 
+  /** Serialise settings into a key/value record for persistence. */
   configValues(options: { includeSecrets?: boolean } = {}): Record<string, string> {
     const values: Record<string, string> = {
       provider: this.provider,

@@ -1,3 +1,11 @@
+/**
+ * @file Database schema and query helpers.
+ *
+ * Defines the SQLite schema (profiles, CV versions, jobs, analyses, generated
+ * CVs, workflows, agent runs, artifacts, app settings) and all CRUD helpers used
+ * by the application, wrapped in transactional sessions.
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -123,16 +131,22 @@ CREATE TABLE IF NOT EXISTS app_settings (
 export type Row = Record<string, any>;
 export type Conn = Database.Database;
 
+/** Current timestamp in ISO-8601 form (seconds precision). */
 export function now(): string {
   return new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00');
 }
 
+/** Open a SQLite connection with foreign keys enabled. */
 export function connect(dbPath: string): Conn {
   const conn = new Database(dbPath, { timeout: 30000 });
   conn.pragma('foreign_keys = ON');
   return conn;
 }
 
+/**
+ * Run a function inside a transactional session, committing on success and
+ * rolling back on error. The connection is closed afterwards.
+ */
 export function withSession<T>(dbPath: string, fn: (conn: Conn) => T): T {
   const conn = connect(dbPath);
   try {
@@ -152,6 +166,7 @@ export function withSession<T>(dbPath: string, fn: (conn: Conn) => T): T {
   }
 }
 
+/** Create the database file and apply the schema if needed. */
 export function initDb(dbPath: string): void {
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
   const conn = connect(dbPath);

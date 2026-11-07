@@ -1,3 +1,10 @@
+/**
+ * @file Zod schemas and inferred TypeScript types for firm data.
+ *
+ * Defines and exports the schemas for contact info, experience, education,
+ * parsed CVs, job analyses, tailored CVs, plus coercion helpers for LLM output.
+ */
+
 import { z } from 'zod';
 
 type UnknownRecord = Record<string, unknown>;
@@ -7,6 +14,7 @@ function isRecord(value: unknown): value is UnknownRecord {
 }
 
 /** LLMs occasionally return a string, dict of lists, or list of objects. */
+/** Coerce LLM output (string/dict/list) into a string array. */
 export function asList(value: unknown): string[] {
   if (value === null || value === undefined) return [];
   if (typeof value === 'string') {
@@ -37,6 +45,7 @@ export function asList(value: unknown): string[] {
   return [String(value)];
 }
 
+/** Coerce any value into a trimmed string. */
 export function coerceText(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'object') return JSON.stringify(value);
