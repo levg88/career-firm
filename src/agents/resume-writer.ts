@@ -126,19 +126,66 @@ export class ResumeWriter {
 
     if (!cv.experience.length && parsed.experience.length) {
       updates.experience = parsed.experience;
-    } else if (cv.experience.length === parsed.experience.length) {
-      // Fill any fields the writer omitted, without overwriting its choices.
-      const merged: ExperienceItem[] = cv.experience.map((generated, index) => {
-        const source = parsed.experience[index];
-        return {
-          ...generated,
-          company: generated.company || source.company,
-          title: generated.title || source.title,
-          start: generated.start || source.start,
-          end: generated.end || source.end,
-          location: generated.location || source.location,
-        };
+    } else if (cv.experience.length > 0) {
+      // Match generated experiences to source by company+title, then pad with
+      // any missing source experiences so no employer is ever dropped.
+      const merged: ExperienceItem[] = [];
+      const usedSourceIndices = new Set<number>();
+
+      for (const generated of cv.experience) {
+        // Find the best matching source experience
+        let bestIndex = -1;
+        let bestScore = 0;
+        for (let i = 0; i < parsed.experience.length; i++) {
+          if (usedSourceIndices.has(i)) continue;
+          const source = parsed.experience[i];
+          let score = 0;
+          if (generated.company && source.company &&
+              generated.company.toLowerCase() === source.company.toLowerCase()) score += 2;
+          if (generated.title && source.title &&
+              generated.title.toLowerCase() === source.title.toLowerCase()) score += 2;
+          if (score > bestScore) {
+            bestScore = score;
+            bestIndex = i;
+          }
+        }
+        if (bestIndex >= 0) {
+          usedSourceIndices.add(bestIndex);
+          const source = parsed.experience[bestIndex];
+          merged.push({
+            ...generated,
+            company: generated.company || source.company,
+            title: generated.title || source.title,
+            start: generated.start || source.start,
+            end: generated.end || source.end,
+            location: generated.location || source.location,
+            bullets: generated.bullets?.length ? generated.bullets : source.bullets,
+          });
+        } else {
+          // No matching source — keep generated as-is but ensure fields
+          merged.push(generated);
+        }
+      }
+
+      // Pad with any source experiences that were not matched (preserves all employers)
+      for (let i = 0; i < parsed.experience.length; i++) {
+        if (!usedSourceIndices.has(i)) {
+          merged.push({ ...parsed.experience[i] });
+        }
+      }
+
+      // Reorder to match source CV chronology: source order takes precedence.
+      // Build a lookup of source index by company+title for ordering.
+      const sourceOrder = new Map<string, number>();
+      parsed.experience.forEach((exp, idx) => {
+        sourceOrder.set(exp.company + '|' + exp.title, idx);
       });
+      merged.sort((a, b) => {
+        const aIdx = sourceOrder.get(a.company + '|' + a.title) ?? Infinity;
+        const bIdx = sourceOrder.get(b.company + '|' + b.title) ?? Infinity;
+        return aIdx - bIdx;
+      });
+
       updates.experience = merged;
     }
 

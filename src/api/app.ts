@@ -300,10 +300,27 @@ export function createApp(initialSettings?: Settings): express.Express {
       return;
     }
 
-    const resolvedBase = bodyString(req, 'base_url').trim() || defaultBaseUrlFor(provider);
+    const ollamaBaseUrl = bodyString(req, 'ollama_base_url').trim();
+    const opencodeBaseUrl = bodyString(req, 'opencode_base_url').trim();
+    const ollamaModel = bodyString(req, 'ollama_model').trim();
+    const opencodeModel = bodyString(req, 'opencode_model').trim();
+    const opencodeApiKey = bodyString(req, 'opencode_api_key').trim();
+
+    let resolvedBase = bodyString(req, 'base_url').trim() || defaultBaseUrlFor(provider);
+    let resolvedModel = bodyString(req, 'model').trim() || defaultModelFor(provider);
+
+    // Use provider-specific values if provided
+    if (provider === 'ollama') {
+      if (ollamaBaseUrl) resolvedBase = ollamaBaseUrl;
+      if (ollamaModel) resolvedModel = ollamaModel;
+    } else if (provider === 'opencode') {
+      if (opencodeBaseUrl) resolvedBase = opencodeBaseUrl;
+      if (opencodeModel) resolvedModel = opencodeModel;
+    }
+
     const updates: Record<string, string> = {
       provider,
-      model: bodyString(req, 'model').trim() || defaultModelFor(provider),
+      model: resolvedModel || defaultModelFor(provider),
       default_language: bodyString(req, 'default_language').trim() || 'en',
       temperature: bodyString(req, 'temperature'),
       max_tokens: bodyString(req, 'max_tokens'),
@@ -330,7 +347,12 @@ export function createApp(initialSettings?: Settings): express.Express {
       if (provider === 'anthropic') updates.anthropic_api_key = enteredKey;
       else if (provider === 'opencode') updates.opencode_api_key = enteredKey;
       else if (provider === 'openai' || provider === 'ollama') updates.api_key = enteredKey;
+    } else if (provider === 'opencode' && opencodeApiKey) {
+      updates.opencode_api_key = opencodeApiKey;
     }
+    // Always save ollama/opencode base URLs if provided
+    if (ollamaBaseUrl) updates.ollama_base_url = ollamaBaseUrl;
+    if (opencodeBaseUrl) updates.opencode_base_url = opencodeBaseUrl;
 
     settings.applyConfig(updates);
     settings.setupComplete = true;
@@ -468,6 +490,30 @@ export function createApp(initialSettings?: Settings): express.Express {
       return;
     }
     res.redirect(303, '/profile?message=CV+imported');
+  });
+
+  app.post('/profile/linkedin', upload.any(), async (req, res) => {
+    const profile = profileRow(settings);
+    try {
+      const file = uploadedFile(req, 'file');
+      if (!file || !file.originalname) throw new Error('Choose a LinkedIn PDF export to import.');
+      const { name, data } = readUpload(file, settings);
+      const filePath = saveUpload(settings, `cvs/profile_${profile.id}`, name, data);
+      const raw = await extractText(filePath);
+      await new FirmService(settings).importCv({
+        profileId: Number(profile.id),
+        vertical: bodyString(req, 'vertical').trim() || 'LinkedIn Export',
+        filename: name,
+        filePath,
+        mime: mimeFor(name),
+        rawText: raw,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error : new Error(String(error));
+      profilePage(res, { error: message.message, statusCode: 400 });
+      return;
+    }
+    res.redirect(303, '/profile?message=LinkedIn+profile+imported');
   });
 
   app.post('/profile/cvs/:cvId/delete', (req, res) => {

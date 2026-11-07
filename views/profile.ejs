@@ -48,6 +48,29 @@
       produces better structure and tailoring.
     </p>
   </section>
+
+  <section class="card">
+    <h3>Import LinkedIn export (PDF)</h3>
+    <p class="small muted">
+      Upload your LinkedIn profile export (PDF). The firm will extract your work
+      experience, education, skills, and certifications to use as a CV source.
+      This is especially useful as a supplementary source alongside your main CV.
+    </p>
+    <form method="post" action="/profile/linkedin" enctype="multipart/form-data">
+      <div class="field">
+        <label for="linkedin-vertical">Vertical label</label>
+        <input id="linkedin-vertical" type="text" name="vertical" placeholder="LinkedIn Export">
+      </div>
+      <div class="field">
+        <label for="linkedin-file">LinkedIn PDF export</label>
+        <input id="linkedin-file" type="file" name="file" accept=".pdf" required>
+      </div>
+      <button type="submit">Import LinkedIn profile</button>
+    </form>
+    <p class="small muted" style="margin-top: 14px;">
+      Go to LinkedIn → Me → View Profile → More → Save to PDF, then upload here.
+    </p>
+  </section>
 </div>
 
 <h2>CV inventory</h2>

@@ -79,8 +79,10 @@ NON-NEGOTIABLE TRUTH RULES
 1. Use ONLY facts present in the source CV and context file. Never invent an
    employer, title, date, degree, certification, location, technology, metric,
    budget, headcount, or scope.
-2. Keep every employer, title, and date from the source CV. You may select,
-   reorder, compress, and rephrase existing content.
+2. Keep EVERY employer, title, and date from the source CV. You may reorder,
+   compress, and rephrase existing content, but you MUST NOT drop or omit any
+   employer from the source CV. Every employer in the source must appear in
+   the output experience array.
 3. Metrics are allowed only when the source contains them. If the source says
    "grew revenue", do not add a percentage. If the source says "led a team of 12",
    keep 12.
@@ -96,6 +98,8 @@ WRITING RULES
   candidate's actual level and domain.
 - Experience bullets: action verb + scope + result. Prefer 2-5 strong bullets per
   recent role and fewer for older roles. Preserve the source's metrics.
+- Preserve the source CV's experience order (chronological as in the source).
+  Do not reorder employers.
 - Core competencies: 8-14 terms drawn from the posting and supported by the CV.
 - Use standard section headings: Professional Summary, Core Competencies,
   Professional Experience, Education, Certifications, Skills, Languages.

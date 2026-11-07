@@ -17,6 +17,29 @@
       much stronger analysis and writing.
     </p>
 
+    <!-- Quick toggle: Local Ollama vs Online OpenCode -->
+    <div style="margin-bottom: 18px; padding: 12px; background: #f8f9fb; border-radius: 10px; border: 1px solid var(--line);">
+      <label style="font-weight: 600; font-size: 13px; margin-bottom: 8px; display: block;">Quick mode toggle</label>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <label style="display: flex; gap: 6px; align-items: center; font-weight: 500; cursor: pointer;">
+          <input type="radio" name="quick_mode" value="ollama" <%= settings.provider === 'ollama' ? 'checked' : '' %> style="width: auto;">
+          🖥 Local Ollama (self-hosted)
+        </label>
+        <label style="display: flex; gap: 6px; align-items: center; font-weight: 500; cursor: pointer;">
+          <input type="radio" name="quick_mode" value="opencode" <%= settings.provider === 'opencode' ? 'checked' : '' %> style="width: auto;">
+          ☁ Online OpenCode (free/paid models)
+        </label>
+        <label style="display: flex; gap: 6px; align-items: center; font-weight: 500; cursor: pointer;">
+          <input type="radio" name="quick_mode" value="mock" <%= settings.provider === 'mock' ? 'checked' : '' %> style="width: auto;">
+          🔌 Offline (no key)
+        </label>
+      </div>
+      <p class="small muted" style="margin: 8px 0 0;">
+        Selecting a mode auto-fills the provider, base URL, and model fields below.
+        Use the advanced section for fine-grained control.
+      </p>
+    </div>
+
     <div class="row">
       <div class="field">
         <label for="provider">Provider</label>
@@ -28,7 +51,7 @@
       </div>
       <div class="field">
         <label for="model">Model</label>
-        <input id="model" type="text" name="model" value="<%= settings.model %>" placeholder="gpt-4.1">
+        <input id="model" type="text" name="model" value="<%= settings.model %>" placeholder="deepseek-v4.1-flash-free">
       </div>
       <div class="field">
         <label for="default_language">Default output language</label>
@@ -36,24 +59,80 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="field">
-        <label for="api_key">API key</label>
-        <input id="api_key" type="password" name="api_key" autocomplete="new-password"
-               placeholder="<%= settings.apiKeyHint ? "Current: " + settings.apiKeyHint + " — leave blank to keep" : "Paste your provider API key" %>">
-        <p class="small muted" style="margin: 5px 0 0;">
-          Leave blank to keep the current key. Required for OpenAI, Anthropic and
-          OpenCode; not used by Ollama or Offline mode.
-        </p>
+    <!-- Ollama-specific fields (shown when provider is ollama) -->
+    <div id="ollama-fields" style="display: <%= settings.provider === 'ollama' ? 'block' : 'none' %>;">
+      <div class="row">
+        <div class="field">
+          <label for="ollama_base_url">Ollama server URL</label>
+          <input id="ollama_base_url" type="text" name="ollama_base_url" value="<%= settings.ollamaBaseUrl %>" placeholder="http://localhost:11434/v1">
+          <p class="small muted" style="margin: 5px 0 0;">
+            Point to your local Ollama instance. Default: http://localhost:11434/v1
+          </p>
+        </div>
+        <div class="field">
+          <label for="ollama_model">Ollama model name</label>
+          <input id="ollama_model" type="text" name="ollama_model" value="<%= settings.provider === 'ollama' ? settings.model : '' %>" placeholder="qwen2.5-coder:14b">
+          <p class="small muted" style="margin: 5px 0 0;">
+            E.g. beam-free, qwen2.5-coder:14b, deepseek-v4.1-flash-free:latest
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- OpenCode-specific fields (shown when provider is opencode) -->
+    <div id="opencode-fields" style="display: <%= settings.provider === 'opencode' ? 'block' : 'none' %>;">
+      <div class="row">
+        <div class="field">
+          <label for="opencode_api_key">OpenCode API key</label>
+          <input id="opencode_api_key" type="password" name="opencode_api_key" autocomplete="new-password"
+                 placeholder="<%= settings.opencodeApiKey ? 'Current: ' + settings.opencodeApiKey.slice(0,4) + '…' + settings.opencodeApiKey.slice(-4) + ' — leave blank to keep' : 'Paste your OpenCode API key' %>">
+          <p class="small muted" style="margin: 5px 0 0;">
+            Required for online OpenCode models. Leave blank to keep current key.
+          </p>
+        </div>
+        <div class="field">
+          <label for="opencode_base_url">OpenCode server URL</label>
+          <input id="opencode_base_url" type="text" name="opencode_base_url" value="<%= settings.opencodeBaseUrl %>" placeholder="https://opencode.ai/inference/openai/v1">
+          <p class="small muted" style="margin: 5px 0 0;">
+            Default: https://opencode.ai/inference/openai/v1
+          </p>
+        </div>
       </div>
       <div class="field">
-        <label for="base_url">Base URL <span class="muted">(optional)</span></label>
-        <input id="base_url" type="text" name="base_url" value="<%= base_url %>" placeholder="https://api.openai.com/v1">
+        <label for="opencode_model">OpenCode model name</label>
+        <input id="opencode_model" type="text" name="opencode_model" value="<%= settings.provider === 'opencode' ? settings.model : '' %>" placeholder="deepseek-v4.1-flash-free">
         <p class="small muted" style="margin: 5px 0 0;">
-          Change this for OpenRouter, vLLM, a proxy, or a self-hosted Ollama endpoint.
+          E.g. deepseek-v4.1-flash-free, big-pickle, beam-free, glm-5.3-flash-free
         </p>
       </div>
     </div>
+
+    <!-- Generic API key / base URL (for other providers) -->
+    <div id="generic-fields" style="display: <%= ['openai', 'anthropic'].includes(settings.provider) ? 'block' : 'none' %>;">
+      <div class="row">
+        <div class="field">
+          <label for="api_key">API key</label>
+          <input id="api_key" type="password" name="api_key" autocomplete="new-password"
+                 placeholder="<%= settings.apiKeyHint ? "Current: " + settings.apiKeyHint + " — leave blank to keep" : "Paste your provider API key" %>">
+          <p class="small muted" style="margin: 5px 0 0;">
+            Leave blank to keep the current key. Required for OpenAI, Anthropic and
+            OpenCode; not used by Ollama or Offline mode.
+          </p>
+        </div>
+        <div class="field">
+          <label for="base_url">Base URL <span class="muted">(optional)</span></label>
+          <input id="base_url" type="text" name="base_url" value="<%= base_url %>" placeholder="https://api.openai.com/v1">
+          <p class="small muted" style="margin: 5px 0 0;">
+            Change this for OpenRouter, vLLM, a proxy, or a self-hosted Ollama endpoint.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <label style="display: flex; gap: 8px; align-items: center; font-weight: 500;">
+      <input type="checkbox" name="clear_key" style="width: auto;">
+      Clear the saved key for this provider
+    </label>
 
     <label style="display: flex; gap: 8px; align-items: center; font-weight: 500;">
       <input type="checkbox" name="clear_key" style="width: auto;">
@@ -139,18 +218,73 @@
 <script>
   const modelSuggestions = <%- JSON.stringify(suggested_models || {}) %>;
   const baseSuggestions = <%- JSON.stringify(suggested_base_urls || {}) %>;
-  const provider = document.getElementById("provider");
-  const model = document.getElementById("model");
-  const baseUrl = document.getElementById("base_url");
-  provider.addEventListener("change", () => {
+
+  function toggleFields() {
+    const provider = document.getElementById("provider").value;
+    document.getElementById("ollama-fields").style.display = provider === "ollama" ? "block" : "none";
+    document.getElementById("opencode-fields").style.display = provider === "opencode" ? "block" : "none";
+    document.getElementById("generic-fields").style.display = ["openai", "anthropic"].includes(provider) ? "block" : "none";
+
+    // Sync model field from provider-specific inputs
+    const ollamaModel = document.getElementById("ollama_model");
+    const opencodeModel = document.getElementById("opencode_model");
+    const model = document.getElementById("model");
+    if (provider === "ollama" && ollamaModel && ollamaModel.value) {
+      model.value = ollamaModel.value;
+    } else if (provider === "opencode" && opencodeModel && opencodeModel.value) {
+      model.value = opencodeModel.value;
+    }
+  }
+
+  // Quick mode toggle
+  document.querySelectorAll('input[name="quick_mode"]').forEach((radio) => {
+    radio.addEventListener("change", (e) => {
+      const provider = document.getElementById("provider");
+      provider.value = e.target.value;
+      // Sync model and base_url
+      const model = document.getElementById("model");
+      const baseUrl = document.getElementById("base_url");
+      if (e.target.value === "ollama") {
+        model.value = "qwen2.5-coder:14b";
+        baseUrl.value = "http://localhost:11434/v1";
+      } else if (e.target.value === "opencode") {
+        model.value = "deepseek-v4.1-flash-free";
+        baseUrl.value = "https://opencode.ai/inference/openai/v1";
+      } else {
+        model.value = "mock";
+        baseUrl.value = "";
+      }
+      toggleFields();
+    });
+  });
+
+  document.getElementById("provider").addEventListener("change", () => {
     const knownModels = Object.values(modelSuggestions);
+    const model = document.getElementById("model");
+    const baseUrl = document.getElementById("base_url");
     if (!model.value || knownModels.includes(model.value)) {
-      model.value = modelSuggestions[provider.value] || "";
+      model.value = modelSuggestions[document.getElementById("provider").value] || "";
     }
     const knownBases = Object.values(baseSuggestions);
     if (!baseUrl.value || knownBases.includes(baseUrl.value)) {
-      baseUrl.value = baseSuggestions[provider.value] || "";
+      baseUrl.value = baseSuggestions[document.getElementById("provider").value] || "";
+    }
+    toggleFields();
+  });
+
+  // Sync provider-specific model fields to main model field
+  document.getElementById("ollama_model")?.addEventListener("input", (e) => {
+    if (document.getElementById("provider").value === "ollama") {
+      document.getElementById("model").value = e.target.value;
     }
   });
+  document.getElementById("opencode_model")?.addEventListener("input", (e) => {
+    if (document.getElementById("provider").value === "opencode") {
+      document.getElementById("model").value = e.target.value;
+    }
+  });
+
+  // Initialize
+  toggleFields();
 </script>
 <%- include("partials/footer") %>

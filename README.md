@@ -111,7 +111,9 @@ The wizard is served by the app itself:
 
 1. Run `npm start` (or `npm run cli -- serve`) and open the printed URL.
 2. Choose a provider: **OpenAI / OpenAI-compatible**, **Anthropic**, **Ollama**, or
-   **Offline mode**.
+   **Offline mode**. A quick toggle lets you switch between local Ollama and online
+   OpenCode with one click; provider-specific fields (server URL, API key, model name)
+   appear only for the selected provider.
 3. Paste an API key when the provider needs one. For OpenRouter, vLLM, a proxy, or a
    self-hosted Ollama, set the base URL too.
 4. Optionally paste or upload your context brief and one CV version right away. You can
@@ -375,8 +377,13 @@ uploads, downloads, and background jobs).
 
 ## Limitations and roadmap
 
-- **LinkedIn:** no automated login/scraping. Planned: compliant OAuth basics and a
-  guided LinkedIn PDF-export importer.
+- **LinkedIn:** no automated login/scraping. A guided LinkedIn PDF-export importer is
+  available on the Profile page — upload a "Save to PDF" profile export and it is
+  parsed as a CV version. All employers, titles, and dates from the source CV are
+  preserved during tailoring; the resume writer may reorder or compress content but
+  never drops an employer.
+- **Progress:** the job detail page shows a live progress bar (Analyzing → Writing →
+  Rendering) with auto-polling so you always know what the firm is doing.
 - **Language:** output language follows the posting or `CAREER_FIRM_LANGUAGE`. DOCX
   handles Unicode; PDF uses system Unicode fonts. Complex RTL shaping may need
   `uharfbuzz` and a font with the right coverage.
