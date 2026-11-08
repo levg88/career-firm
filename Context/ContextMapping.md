@@ -14,7 +14,7 @@
 | Topic | Aliases | Path |
 |---|---|---|
 | Overview | project overview, what this project is, orientation | `Context/Overview/Memory.md` |
-| Firm Agents | agents, office manager, headhunter, resume writer | `Context/Agents/Firm-Agents/Memory.md` |
+| Firm Agents | agents, office manager, headhunter, resume writer, agent definitions, agents/*.md, prompt loader, CAREER_FIRM_AGENTS_DIR | `Context/Agents/Firm-Agents/Memory.md` |
 | LLM Providers | providers, ollama, openrouter, model routing, offline mode | `Context/Agents/LLM-Providers/Memory.md` |
 | Job Analysis | job analysis, ats keywords, match score, must-haves | `Context/Domain/Job-Analysis/Memory.md` |
 | CV Tailoring | cv tailoring, resume writer, grounding, truthfulness | `Context/Domain/CV-Tailoring/Memory.md` |
