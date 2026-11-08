@@ -40,6 +40,7 @@ describe('markdown agent definitions', () => {
   it('loads the bundled firm agents from agents/*.md', () => {
     const definitions = loadAgentDefinitions();
     expect(definitions.map((definition) => definition.id).sort()).toEqual([
+      'fixer',
       'headhunter',
       'office_manager',
       'resume_writer',
