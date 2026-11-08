@@ -11,9 +11,10 @@ import { analyzeJobHeuristic, candidateDigest } from '../documents/heuristics';
 import { LLMClient } from '../llm/base';
 import { MockClient } from '../llm/mock';
 import { jobAnalysisSchema, type JobAnalysis } from '../models';
-import { Agent } from './base';
-import { HEADHUNTER } from './prompts';
+import { agentFromDefinition } from './base';
+import { getAgentDefinition, renderAgentTask, type AgentDefinition } from './definitions';
 import { recordHeuristicRun, runAgent } from './runner';
+import { schemaForAgent } from './schema';
 
 /**
  * Options for {@link Headhunter.analyze}.
@@ -33,13 +34,16 @@ export interface AnalyzeOptions {
  * Wraps either an LLM-backed analysis or the deterministic heuristic fallback.
  */
 export class Headhunter {
-  readonly role = 'headhunter';
+  readonly definition: AgentDefinition;
+  readonly role: string;
   settings: Settings;
   llm: LLMClient;
 
   constructor(settings: Settings, llm: LLMClient) {
     this.settings = settings;
     this.llm = llm;
+    this.definition = getAgentDefinition('headhunter', { extraDirs: [settings.agentsDir] });
+    this.role = this.definition.role;
   }
 
   /**
@@ -82,32 +86,22 @@ export class Headhunter {
     const inventory = cvs
       .map((cv) => `- CV ID ${cv.id} | vertical: ${cv.vertical ?? ''} | file: ${cv.filename ?? ''}`)
       .join('\n');
-    const task =
-      'Analyse the job below for this client and return the JobAnalysis JSON.\n\n' +
-      `## JOB DESCRIPTION\n${jobDescription.trim()}\n\n` +
-      `## CV INVENTORY\n${inventory || '(no CVs imported)'}\n\n` +
-      `## TARGET OUTPUT LANGUAGE\n${language}\n\n` +
-      'Use the exact CV IDs above in recommended_cv_id.';
+    const task = renderAgentTask(this.definition, {
+      job_description: jobDescription.trim(),
+      cv_inventory: inventory || '(no CVs imported)',
+      language,
+    });
 
-    const agent = new Agent(
-      {
-        name: 'headhunter',
-        role: this.role,
-        systemPrompt: HEADHUNTER,
-        temperature: 0.1,
-      },
-      this.llm,
-      this.settings,
-    );
+    const agent = agentFromDefinition(this.definition, this.llm, this.settings);
 
     let analysis: JobAnalysis;
     try {
       const result = await runAgent(this.settings, agent, {
-        workflow: 'tailoring',
+        workflow: this.definition.workflow,
         role: this.role,
         task,
         context: digest,
-        schema: jobAnalysisSchema,
+        schema: schemaForAgent(this.definition),
         workflowRunId,
       });
       analysis = jobAnalysisSchema.parse(result.data ?? {});

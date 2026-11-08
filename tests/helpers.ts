@@ -52,6 +52,7 @@ const MANAGED_ENV = [
   'CAREER_FIRM_MODEL',
   'CAREER_FIRM_HEURISTIC_FALLBACK',
   'CAREER_FIRM_SETUP_COMPLETE',
+  'CAREER_FIRM_AGENTS_DIR',
   'OPENAI_API_KEY',
   'ANTHROPIC_API_KEY',
   'OPENCODE_API_KEY',
@@ -84,6 +85,7 @@ export function makeSettings(options: SettingsOptions = {}): Settings {
   process.env.CAREER_FIRM_MODEL = options.provider ?? 'mock';
   process.env.CAREER_FIRM_HEURISTIC_FALLBACK = 'true';
   process.env.CAREER_FIRM_SETUP_COMPLETE = options.setupComplete === false ? 'false' : 'true';
+  delete process.env.CAREER_FIRM_AGENTS_DIR;
   delete process.env.OPENAI_API_KEY;
   delete process.env.ANTHROPIC_API_KEY;
   delete process.env.OPENCODE_API_KEY;

@@ -11,7 +11,7 @@ import path from 'node:path';
 
 import { Settings, defaultBaseUrlFor, defaultModelFor } from './config';
 import * as db from './db';
-import { HEADHUNTER, OFFICE_MANAGER, RESUME_WRITER } from './agents/prompts';
+import { loadAgentDefinitions } from './agents/definitions';
 import { extractText } from './documents/extract';
 import { buildLlm } from './llm';
 import { MockClient } from './llm/mock';
@@ -358,23 +358,31 @@ async function cmdServe(
   return 0;
 }
 
-function cmdAgents(options: Record<string, string | boolean>): number {
-  const roles: Record<string, [string, string]> = {
-    office_manager: ['Office Manager', OFFICE_MANAGER],
-    headhunter: ['Headhunter', HEADHUNTER],
-    resume_writer: ['Resume Writer', RESUME_WRITER],
-  };
+function cmdAgents(
+  settings: Settings,
+  options: Record<string, string | boolean>,
+): number {
+  const definitions = loadAgentDefinitions({ extraDirs: [settings.agentsDir] });
   const selected = optionString(options, 'prompt');
   if (selected) {
-    if (!(selected in roles)) {
-      throw new Error(`Unknown role. Choose: ${Object.keys(roles).join(', ')}`);
+    const found = definitions.find(
+      (definition) =>
+        definition.id === selected ||
+        definition.name.toLowerCase() === selected.toLowerCase(),
+    );
+    if (!found) {
+      throw new Error(
+        `Unknown agent. Choose: ${definitions.map((definition) => definition.id).join(', ')}`,
+      );
     }
-    console.log(roles[selected][1]);
+    console.log(found.systemPrompt);
     return 0;
   }
-  for (const [key, [label, prompt]] of Object.entries(roles)) {
-    const firstLine = (prompt.trim().split('\n')[0] ?? '').slice(0, 100);
-    console.log(`${padRight(key, 18)} ${padRight(label, 18)} ${firstLine}`);
+  for (const definition of definitions) {
+    const summary = definition.description || (definition.systemPrompt.split('\n')[0] ?? '');
+    console.log(
+      `${padRight(definition.id, 18)} ${padRight(definition.name, 18)} ${summary.slice(0, 100)}`,
+    );
   }
   return 0;
 }
@@ -396,7 +404,7 @@ commands:
   job list             List jobs
   job show ID          Show a job, analysis, and generated files (--json)
   serve                Run the local web app (--host/--port)
-  agents               List agent roles or print a role prompt (--prompt ROLE)
+  agents               List markdown-defined agents or print a system prompt (--prompt ID)
 `;
 
 /** CLI entry point: parse args and dispatch to subcommands. */
@@ -424,7 +432,7 @@ export async function main(argv: string[]): Promise<number> {
     if (command === 'job') {
       return await cmdJob(settings, positionals.slice(1), global.options);
     }
-    if (command === 'agents') return cmdAgents(global.options);
+    if (command === 'agents') return cmdAgents(settings, global.options);
     if (command === 'serve') return await cmdServe(settings, global.options);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));

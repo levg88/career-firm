@@ -6,7 +6,9 @@ your evidence to its requirements, and a resume-writer agent produces a tailored
 ATS-safe **PDF + DOCX** — stored in a local SQLite database with a full audit trail.
 
 The firm has three agents — **Office Manager**, **Headhunter**, and **Resume Writer** —
-running on a provider-agnostic LLM layer with a local audit trail.
+running on a provider-agnostic LLM layer with a local audit trail. Each agent is defined
+in a Markdown file under `agents/`; edit its prompt, task template, or sampling settings
+and the next run picks them up without a rebuild.
 
 Built with **TypeScript**, **Node.js**, **Express 5**, **SQLite** (`better-sqlite3`),
 **EJS**, `pdfkit` + `pdf-lib`, and `docx` + `mammoth`.
@@ -72,6 +74,50 @@ A deterministic **grounding validator** runs after generation and flags any empl
 year, number, email, or phone that is not present in the source material. Warnings are
 shown in the UI and stored with each generated CV. It is a safety net, not a truth
 oracle — always review before sending.
+
+### Agent definitions
+
+The agents are Markdown, not hard-coded TypeScript. Bundled definitions live in
+`agents/`:
+
+```text
+agents/
+  office-manager.md   Office Manager
+  headhunter.md       Headhunter
+  resume-writer.md    Resume Writer
+```
+
+Each file has YAML-style frontmatter and two sections:
+
+```md
+---
+id: headhunter
+name: Headhunter
+role: headhunter
+description: Decodes a posting, maps evidence, and scores the match.
+schema: job_analysis
+workflow: tailoring
+temperature: 0.1
+max_tokens: null
+---
+
+# System Prompt
+You are ...
+
+# Task
+Analyse the job below and return the JobAnalysis JSON.
+
+### JOB DESCRIPTION
+{{job_description}}
+```
+
+- `schema` is one of `parsed_cv`, `job_analysis`, `tailored_cv`, or `none`.
+- `# Task` supports `{{placeholder}}` variables filled by the calling agent.
+- Edit a bundled file directly, or override it by placing a file with the same `id`
+  in `<home>/agents` (default `data/agents`). Later directories win.
+- Changes apply on the next agent run — no build or restart required.
+- `career-firm agents` lists the loaded definitions; `--prompt <id>` prints one
+  system prompt.
 
 ---
 
@@ -188,7 +234,7 @@ career-firm job run ID                   Re-run tailoring
 career-firm job list
 career-firm job show ID [--json]
 career-firm serve [--host H] [--port P]
-career-firm agents [--prompt ROLE]       List roles / print a role prompt
+career-firm agents [--prompt ID]       List markdown-defined agents / print a system prompt
 ```
 
 `--home DIR` overrides the data directory for any command.
@@ -235,6 +281,7 @@ finish the wizard, the stored configuration takes precedence.
 | `CAREER_FIRM_PORT` | `8765` | Bind port |
 | `CAREER_FIRM_LANGUAGE` | `en` | Default output language |
 | `CAREER_FIRM_FONT_PATH` | auto | Optional TTF for PDF rendering |
+| `CAREER_FIRM_AGENTS_DIR` | `<home>/agents` | Optional directory of markdown agent overrides |
 
 Provider behaviour:
 
@@ -316,28 +363,46 @@ provider receives the prompt. SQLite uses WAL mode and a connection per operatio
 
 ## Extending
 
-### Add a firm agent
+### Add or change a firm agent
 
-Each agent lives in its own module under `src/agents/`:
+Agent identity, prompt, task template, output schema, and sampling settings are
+Markdown. Bundled definitions live in `agents/`:
 
 ```text
 agents/
-  base.ts            shared Agent / AgentSpec / tool runtime
-  runner.ts          audit logging and deterministic fallback records
-  grounding.ts       deterministic truthfulness checks
-  prompts.ts         system prompts for the three roles
-  office-manager.ts  Office Manager
-  headhunter.ts      Headhunter
-  resume-writer.ts   Resume Writer
+  office-manager.md  Office Manager
+  headhunter.md      Headhunter
+  resume-writer.md   Resume Writer
 ```
 
-To add an agent:
+The TypeScript runtime stays small and generic:
 
-1. Add a prompt in `src/agents/prompts.ts`.
-2. Create `src/agents/<name>.ts` with a class that wraps `Agent` + `runAgent(...)`.
-3. Export it from `src/agents/index.ts`.
-4. Call `runAgent(...)` with a Zod schema so the output is validated and audited.
-5. Wire it into `FirmService` or a new orchestrator.
+```text
+src/agents/
+  base.ts            shared Agent / AgentSpec / tool runtime
+  definitions.ts     markdown discovery, parsing, and task rendering
+  schema.ts          maps `schema:` names to Zod output schemas
+  runner.ts          audit logging and deterministic fallback records
+  grounding.ts       deterministic truthfulness checks
+  office-manager.ts  thin domain wrapper around the definition
+  headhunter.ts      thin domain wrapper around the definition
+  resume-writer.ts   thin domain wrapper around the definition
+```
+
+To change an existing role, edit its Markdown file (or add an override with the same
+`id` under `<home>/agents`) — no rebuild or restart is needed.
+
+To add a role that participates in the pipeline:
+
+1. Add `agents/<name>.md` with frontmatter and `# System Prompt` / `# Task` sections.
+2. If the role needs bespoke normalisation or a deterministic fallback, add a small
+   TypeScript wrapper under `src/agents/` that calls `getAgentDefinition('<id>')`,
+   `agentFromDefinition(...)`, `renderAgentTask(...)`, and `runAgent(...)`.
+3. Export the wrapper from `src/agents/index.ts`.
+4. Wire it into `FirmService` or a new orchestrator.
+
+`runAgent(...)` records every call, and the declared `schema:` keeps the output
+validated and audited.
 
 ### Add a provider
 
@@ -369,9 +434,9 @@ npm run build
 ```
 
 Covered: heuristic parsing, job analysis, tailoring, grounding, DOCX/PDF extraction and
-rendering, SQLite round-trips, the firm workflow, the agent tool-calling loop, JSON
-repair, the startup setup wizard and config persistence, and all web routes (including
-uploads, downloads, and background jobs).
+rendering, SQLite round-trips, the firm workflow, markdown agent definitions and
+overrides, the agent tool-calling loop, JSON repair, the startup setup wizard and config
+persistence, and all web routes (including uploads, downloads, and background jobs).
 
 ---
 

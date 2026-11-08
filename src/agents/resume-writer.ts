@@ -17,10 +17,11 @@ import {
   type ParsedCV,
   type TailoredCV,
 } from '../models';
-import { Agent } from './base';
+import { agentFromDefinition } from './base';
+import { getAgentDefinition, renderAgentTask, type AgentDefinition } from './definitions';
 import { removeUnsupportedKeywords, validateGrounding } from './grounding';
-import { RESUME_WRITER } from './prompts';
 import { recordHeuristicRun, runAgent } from './runner';
+import { schemaForAgent } from './schema';
 
 /**
  * Options for {@link ResumeWriter.write}.
@@ -36,13 +37,16 @@ export interface WriteOptions {
 
 /** Elite executive resume writer with a deterministic grounding check. */
 export class ResumeWriter {
-  readonly role = 'resume_writer';
+  readonly definition: AgentDefinition;
+  readonly role: string;
   settings: Settings;
   llm: LLMClient;
 
   constructor(settings: Settings, llm: LLMClient) {
     this.settings = settings;
     this.llm = llm;
+    this.definition = getAgentDefinition('resume_writer', { extraDirs: [settings.agentsDir] });
+    this.role = this.definition.role;
   }
 
   /**
@@ -69,35 +73,23 @@ export class ResumeWriter {
       return [cv, warnings];
     }
 
-    const task =
-      'Write the tailored CV for this role. Use the analysis and the source CV below.\n\n' +
-      `## TARGET LANGUAGE\n${language}\n\n` +
-      '## HEADHUNTER ANALYSIS\n' +
-      `${JSON.stringify(analysis, null, 2)}\n\n` +
-      '## SOURCE CV (AUTHORITATIVE — do not add facts)\n' +
-      `${JSON.stringify(parsed, null, 2)}\n\n` +
-      '## ORIGINAL SOURCE TEXT (for exact wording and metrics)\n' +
-      sourceText.slice(0, 24000);
+    const task = renderAgentTask(this.definition, {
+      language,
+      analysis_json: analysis,
+      source_cv_json: parsed,
+      source_text: sourceText.slice(0, 24000),
+    });
 
-    const agent = new Agent(
-      {
-        name: 'resume_writer',
-        role: this.role,
-        systemPrompt: RESUME_WRITER,
-        temperature: 0.25,
-      },
-      this.llm,
-      this.settings,
-    );
+    const agent = agentFromDefinition(this.definition, this.llm, this.settings);
 
     let cv: TailoredCV;
     try {
       const result = await runAgent(this.settings, agent, {
-        workflow: 'tailoring',
+        workflow: this.definition.workflow,
         role: this.role,
         task,
         context,
-        schema: tailoredCvSchema,
+        schema: schemaForAgent(this.definition),
         workflowRunId,
       });
       cv = tailoredCvSchema.parse(result.data ?? {});

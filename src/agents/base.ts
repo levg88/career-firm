@@ -12,6 +12,7 @@ import { toJSONSchema, type ZodType } from 'zod';
 
 import { Settings } from '../config';
 import { LLMClient, LLMError, LLMResponse, parseJsonObject } from '../llm/base';
+import type { AgentDefinition } from './definitions';
 
 /**
  * Error thrown when an agent fails to produce a valid final answer within
@@ -247,4 +248,25 @@ export class Agent {
 
     throw new AgentError(`Agent '${this.spec.name}' exceeded ${limit} steps without a final answer.`);
   }
+}
+
+/** Build an {@link Agent} from a markdown agent definition. */
+export function agentFromDefinition(
+  definition: AgentDefinition,
+  llm: LLMClient,
+  settings: Settings,
+  tools?: ToolRegistry,
+): Agent {
+  return new Agent(
+    {
+      name: definition.id,
+      role: definition.role,
+      systemPrompt: definition.systemPrompt,
+      temperature: definition.temperature,
+      maxTokens: definition.maxTokens,
+    },
+    llm,
+    settings,
+    tools,
+  );
 }

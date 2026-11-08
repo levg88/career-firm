@@ -13,19 +13,23 @@ import { parseCvHeuristic } from '../documents/heuristics';
 import { LLMClient } from '../llm/base';
 import { MockClient } from '../llm/mock';
 import { parsedCvSchema, type ParsedCV } from '../models';
-import { Agent } from './base';
-import { OFFICE_MANAGER } from './prompts';
+import { agentFromDefinition } from './base';
+import { getAgentDefinition, renderAgentTask, type AgentDefinition } from './definitions';
 import { recordHeuristicRun, runAgent } from './runner';
+import { schemaForAgent } from './schema';
 
 /** Reads the client's CVs and context, and keeps the record faithful. */
 export class OfficeManager {
-  readonly role = 'office_manager';
+  readonly definition: AgentDefinition;
+  readonly role: string;
   settings: Settings;
   llm: LLMClient;
 
   constructor(settings: Settings, llm: LLMClient) {
     this.settings = settings;
     this.llm = llm;
+    this.definition = getAgentDefinition('office_manager', { extraDirs: [settings.agentsDir] });
+    this.role = this.definition.role;
   }
 
   /**
@@ -53,29 +57,17 @@ export class OfficeManager {
       return parsed;
     }
 
-    const agent = new Agent(
-      {
-        name: 'office_manager',
-        role: this.role,
-        systemPrompt: OFFICE_MANAGER,
-        temperature: 0.0,
-      },
-      this.llm,
-      this.settings,
-    );
-    const task =
-      'Parse the CV in the CONTEXT section into the ParsedCV schema. ' +
-      `Filename: ${filename || 'unknown'}. ` +
-      'If the name cannot be determined, use the filename stem only as a last resort.';
+    const agent = agentFromDefinition(this.definition, this.llm, this.settings);
+    const task = renderAgentTask(this.definition, { filename: filename || 'unknown' });
 
     let parsed: ParsedCV;
     try {
       const result = await runAgent(this.settings, agent, {
-        workflow: 'office_manager',
+        workflow: this.definition.workflow,
         role: this.role,
         task,
         context: text,
-        schema: parsedCvSchema,
+        schema: schemaForAgent(this.definition),
         workflowRunId: options.workflowRunId ?? null,
       });
       parsed = parsedCvSchema.parse(result.data ?? {});

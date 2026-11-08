@@ -118,6 +118,7 @@ export class Settings {
   dbPath: string;
   storageDir: string;
   runsDir: string;
+  agentsDir: string;
   provider: Provider;
   model: string;
   apiKey: string;
@@ -167,6 +168,9 @@ export class Settings {
     this.dbPath = path.join(values.home, 'firm.db');
     this.storageDir = path.join(values.home, 'storage');
     this.runsDir = path.join(values.home, 'runs');
+    this.agentsDir = path.resolve(
+      process.env.CAREER_FIRM_AGENTS_DIR || path.join(values.home, 'agents'),
+    );
     this.provider = values.provider;
     this.model = values.model;
     this.apiKey = values.apiKey;
@@ -240,9 +244,9 @@ export class Settings {
     return settings;
   }
 
-  /** Create the data, storage, and runs directories if missing. */
+  /** Create the data, storage, runs, and agents directories if missing. */
   ensureDirs(): void {
-    for (const dir of [this.dataDir, this.storageDir, this.runsDir]) {
+    for (const dir of [this.dataDir, this.storageDir, this.runsDir, this.agentsDir]) {
       fs.mkdirSync(dir, { recursive: true });
     }
     for (const sub of ['cvs', 'jobs', 'generated']) {
@@ -298,6 +302,9 @@ export class Settings {
     if ('host' in values) this.host = values.host.trim() || '127.0.0.1';
     if ('port' in values) this.port = asInt('port', this.port);
     if ('font_path' in values) this.fontPath = values.font_path.trim();
+    if ('agents_dir' in values) {
+      this.agentsDir = path.resolve(values.agents_dir.trim() || this.agentsDir);
+    }
     if ('setup_complete' in values) {
       this.setupComplete = asBool('setup_complete', this.setupComplete);
     }
@@ -360,6 +367,7 @@ export class Settings {
       data_dir: this.dataDir,
       db_path: this.dbPath,
       runs_dir: this.runsDir,
+      agents_dir: this.agentsDir,
       temperature: this.temperature,
       max_tokens: this.maxTokens,
       max_agent_steps: this.maxAgentSteps,

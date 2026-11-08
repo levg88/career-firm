@@ -13,6 +13,11 @@
 - The frontmatter `schema:` field maps to a Zod schema in `src/agents/schema.ts`; valid values are `parsed_cv`, `job_analysis`, `tailored_cv`, and `none`. (General)
 - `career-firm agents` lists the loaded definitions, and `career-firm agents --prompt <id>` prints a given agent's system prompt. (General)
 - `src/agents/prompts.ts` has been removed; the three system prompts were moved verbatim into `agents/office-manager.md`, `agents/headhunter.md`, and `agents/resume-writer.md` (verified by exact text comparison). (General)
+- Editing a bundled or override `agents/*.md` takes effect on the next agent run — no rebuild and no server restart required. (General)
+- Runtime split: `src/agents/base.ts` holds the shared Agent/AgentSpec/tool runtime, `src/agents/runner.ts` does audit logging plus deterministic fallback records, `src/agents/grounding.ts` holds the deterministic truthfulness checks, and the three role modules are thin domain wrappers over them. (General)
+- Adding a role to the pipeline is four steps: add `agents/<name>.md` (frontmatter + `# System Prompt` / `# Task`); optionally add a thin TS wrapper under `src/agents/` calling `getAgentDefinition`, `agentFromDefinition`, `renderAgentTask` and `runAgent`; export the wrapper from `src/agents/index.ts`; wire it into `FirmService` or a new orchestrator. (General)
+- `runAgent(...)` records every agent call and validates its output against the schema declared in the definition's frontmatter. (General)
+- Prompt/template-only edits need no TypeScript; a new or changed role that needs bespoke normalisation or a deterministic fallback requires a TS wrapper. (General)
 
 ## Gotchas
 <!-- Traps, false-failure causes, timing quirks. Tagged. -->
