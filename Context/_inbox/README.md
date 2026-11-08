@@ -1,6 +1,6 @@
 # Context Inbox
 
-Working agents drop raw session findings here. The Librarian agent (`/curate-context`) merges them into the right `Memory.md`, then deletes the inbox file. Never edit `Memory.md` files directly.
+Working agents drop raw session findings here. The Librarian agent (`/curate-context`) merges them into the right `Memory.md`, then deletes the inbox file. Never edit `Memory.md` files directly. A 0-byte file is treated as already processed and is ignored by the router.
 
 ## File naming
 

@@ -1,5 +1,5 @@
 import { Plugin } from "@opencode/plugin"
-import { readFile, readdir } from "node:fs/promises"
+import { readFile, readdir, stat } from "node:fs/promises"
 import path from "node:path"
 
 const MAX_TOPICS = 6
@@ -82,9 +82,20 @@ async function readRouter(root: string): Promise<string> {
 }
 
 async function inboxFiles(root: string): Promise<string[]> {
+  const dir = path.join(root, "Context/_inbox")
   try {
-    const files = await readdir(path.join(root, "Context/_inbox"))
-    return files.filter((name) => name.endsWith(".md") && name !== "README.md").sort()
+    const names = await readdir(dir)
+    const out: string[] = []
+    for (const name of names.sort()) {
+      if (!name.endsWith(".md") || name === "README.md") continue
+      try {
+        // A processed file the librarian truncated to 0 bytes is not pending work.
+        if ((await stat(path.join(dir, name))).size > 0) out.push(name)
+      } catch {
+        // Skip unreadable entries.
+      }
+    }
+    return out
   } catch {
     return []
   }

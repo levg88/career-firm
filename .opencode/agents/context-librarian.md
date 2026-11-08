@@ -11,6 +11,12 @@ permissions:
   - action: shell
     resource: "*"
     effect: deny
+  - action: shell
+    resource: "rm Context/_inbox/*"
+    effect: allow
+  - action: shell
+    resource: "rm -f Context/_inbox/*"
+    effect: allow
   - action: subagent
     resource: "*"
     effect: deny
@@ -39,6 +45,6 @@ You are the Context Librarian for Career Firm. You are the ONLY writer of `Conte
 
 ## Cleanup & report
 
-4. Delete each fully processed inbox file. A partially processed file (one containing untagged findings you quarantined) is deleted anyway — the quarantined items now live in Open Questions.
+4. Delete each fully processed inbox file. A partially processed file (one containing untagged findings you quarantined) is deleted anyway — the quarantined items now live in Open Questions. The ONLY shell command you may run is `rm Context/_inbox/<file>.md` (or `rm -f Context/_inbox/<file>.md`); use one command per file. If deletion fails, overwrite the file with empty content (0 bytes) — the router ignores empty inbox files.
 5. Never run git. Never touch files outside `Context/`.
 6. Final report: files merged, facts added / updated / superseded, new topics created, untagged or secret items flagged, size-cap actions taken.
