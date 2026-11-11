@@ -782,15 +782,22 @@ export function createApp(initialSettings?: Settings): express.Express {
       return;
     }
     try {
-      const svc = new LinkedInService();
       const token = db.withSession(settings.dbPath, (conn) => db.getAppSettings(conn).linkedin_access_token);
-      // attach token via config override by constructing with client creds only; token passed implicitly not needed for stub
-      await svc.publishPost(ls.lastPost.text, ls.lastPost.image?.url);
-      const updated = { ...ls.lastPost, published: true, publishedAt: new Date().toISOString() };
+      const svc = new LinkedInService({ accessToken: token });
+      const result = await svc.publishPost(ls.lastPost.text, ls.lastPost.image?.url);
+      const updated = {
+        ...ls.lastPost,
+        published: true,
+        publishedAt: new Date().toISOString(),
+        publishId: result.id,
+      };
       db.withSession(settings.dbPath, (conn) =>
-        db.saveAppSettings(conn, { linkedin_last_post: JSON.stringify(updated) }),
+        db.saveAppSettings(conn, {
+          linkedin_last_post: JSON.stringify(updated),
+          linkedin_last_publish_id: result.id,
+        }),
       );
-      res.redirect(303, '/linkedin?message=Published+to+LinkedIn');
+      res.redirect(303, `/linkedin?message=${encodeURIComponent(`Published to LinkedIn (${result.id})`)}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       res.redirect(303, `/linkedin?error=${encodeURIComponent(message)}`);

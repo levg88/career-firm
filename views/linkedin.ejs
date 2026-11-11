@@ -34,6 +34,9 @@
 <section class="card" style="margin-bottom: 20px;">
   <h2>3 · Review &amp; publish</h2>
   <p class="small muted">Theme: <strong><%= lp.theme %></strong></p>
+  <% if (lp.published) { %>
+    <div class="banner success">Published to LinkedIn<%= lp.publishId ? ` · ${lp.publishId}` : '' %></div>
+  <% } %>
   <div class="card" style="background: var(--bg-soft, #f6f7f9); padding: 12px; margin: 8px 0;">
     <p style="white-space: pre-wrap;"><%= lp.text %></p>
     <% if (lp.image && lp.image.url) { %>

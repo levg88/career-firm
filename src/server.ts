@@ -58,7 +58,7 @@ export function startServer(options: StartServerOptions = {}): http.Server {
         db.saveAppSettings(conn, { linkedin_last_post: JSON.stringify(post) }),
       );
       if (s.linkedin_auto_publish === 'true' && s.linkedin_access_token) {
-        const svc = new LinkedInService();
+        const svc = new LinkedInService({ accessToken: s.linkedin_access_token });
         await svc.publishPost(post.text, post.image?.url);
         const updated = { ...post, published: true, publishedAt: new Date().toISOString() };
         db.withSession(settings.dbPath, (conn) =>
