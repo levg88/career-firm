@@ -10,6 +10,7 @@ import { createApp } from './api/app';
 import * as db from './db';
 import { LinkedInService } from './services/linkedin';
 import { postGeneration } from './services/postGeneration';
+import { buildLlm } from './llm';
 
 // Minimal app used by the LinkedIn posts mini-app tests.
 const app = express();
@@ -47,7 +48,7 @@ export function startServer(options: StartServerOptions = {}): http.Server {
       if (lastScheduledDate === today) return;
       lastScheduledDate = today;
       const theme = s.linkedin_schedule_theme || 'Daily Update';
-      const post = await postGeneration.generateAsync(theme);
+      const post = await postGeneration.generateAsync(theme, buildLlm(settings));
       db.withSession(settings.dbPath, (conn) =>
         db.saveAppSettings(conn, { linkedin_last_post: JSON.stringify(post) }),
       );

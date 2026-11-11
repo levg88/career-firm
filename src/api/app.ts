@@ -758,7 +758,7 @@ export function createApp(initialSettings?: Settings): express.Express {
   app.post('/linkedin/generate', async (req, res) => {
     const theme = bodyString(req, 'theme').trim() || 'General';
     try {
-      const post = await postGeneration.generateAsync(theme);
+      const post = await postGeneration.generateAsync(theme, buildLlm(settings));
       db.withSession(settings.dbPath, (conn) =>
         db.saveAppSettings(conn, { linkedin_last_post: JSON.stringify(post) }),
       );
