@@ -154,9 +154,7 @@ export function createApp(initialSettings?: Settings): express.Express {
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
 
-  // LinkedIn connection and post generation (mini-app)
-  app.use('/auth', authRoutes);
-  app.use('/posts', postsRoutes);
+  // LinkedIn connection and post generation are handled by dedicated routes below.
 
   const upload = multer({
     storage: multer.memoryStorage(),
