@@ -1,0 +1,75 @@
+<%- include("partials/header", { title: "LinkedIn · Career Firm" }) %>
+<%
+  const lp = (typeof lastPost !== 'undefined' && lastPost) ? lastPost : null;
+%>
+<h1>LinkedIn post studio</h1>
+<p class="lead small muted">Connect your LinkedIn account, generate posts with an AI picture, review, and publish or schedule.</p>
+
+<section class="card" style="margin-bottom: 20px;">
+  <h2>1 · Connect LinkedIn</h2>
+  <% if (connected) { %>
+    <div class="banner success">LinkedIn account connected.</div>
+    <form method="post" action="/linkedin/disconnect" style="margin-top: 8px;">
+      <button class="button secondary" type="submit">Disconnect</button>
+    </form>
+  <% } else { %>
+    <p class="small muted">You are not connected yet.</p>
+    <a class="button" href="/auth/linkedin">Connect to LinkedIn</a>
+  <% } %>
+</section>
+
+<section class="card" style="margin-bottom: 20px;">
+  <h2>2 · Generate a post</h2>
+  <form method="post" action="/linkedin/generate" class="form-grid">
+    <label>Theme / topic
+      <input type="text" name="theme" value="<%= typeof theme !== 'undefined' ? theme : '' %>" placeholder="e.g. Technology, Leadership, AI" required>
+    </label>
+    <div class="actions">
+      <button class="button" type="submit">Generate post (push)</button>
+    </div>
+  </form>
+</section>
+
+<% if (lp) { %>
+<section class="card" style="margin-bottom: 20px;">
+  <h2>3 · Review &amp; publish</h2>
+  <p class="small muted">Theme: <strong><%= lp.theme %></strong></p>
+  <div class="card" style="background: var(--bg-soft, #f6f7f9); padding: 12px; margin: 8px 0;">
+    <p style="white-space: pre-wrap;"><%= lp.text %></p>
+    <% if (lp.image && lp.image.url) { %>
+      <p class="small muted">Image: <%= lp.image.url %></p>
+      <% if (lp.image.path) { %>
+        <img src="/linkedin/image" alt="generated" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">
+      <% } %>
+    <% } %>
+  </div>
+  <form method="post" action="/linkedin/publish" style="display: inline-block; margin-right: 8px;">
+    <button class="button" type="submit" <%= connected ? '' : 'disabled' %>>Publish to LinkedIn</button>
+  </form>
+  <% if (!connected) { %><p class="small muted">Connect LinkedIn to publish.</p><% } %>
+</section>
+<% } %>
+
+<section class="card">
+  <h2>4 · Schedule</h2>
+  <form method="post" action="/linkedin/schedule" class="form-grid">
+    <label>
+      <input type="checkbox" name="enabled" value="1" <%= scheduleEnabled ? 'checked' : '' %>> Enable daily schedule
+    </label>
+    <label>Time (HH:MM)
+      <input type="time" name="time" value="<%= scheduleTime %>">
+    </label>
+    <label>Daily theme
+      <input type="text" name="scheduleTheme" value="<%= scheduleTheme %>">
+    </label>
+    <label>
+      <input type="checkbox" name="autoPublish" value="1" <%= autoPublish ? 'checked' : '' %>> Auto-publish when scheduled (approved)
+    </label>
+    <div class="actions">
+      <button class="button secondary" type="submit">Save schedule</button>
+    </div>
+  </form>
+  <p class="small muted">When enabled, the server generates a post at the scheduled time<%= autoPublish ? ' and publishes it automatically' : ' (draft only)' %>.</p>
+</section>
+
+<%- include("partials/footer") %>
