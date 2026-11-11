@@ -18,6 +18,8 @@ import { ExtractionError, extractText } from '../documents/extract';
 import { buildLlm } from '../llm';
 import { MockClient } from '../llm/mock';
 import { FirmService } from '../orchestrator/firm';
+import authRoutes from '../routes/auth';
+import postsRoutes from '../routes/posts';
 import {
   applyStoredSettings,
   isProviderName,
@@ -149,6 +151,10 @@ export function createApp(initialSettings?: Settings): express.Express {
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
 
+  // LinkedIn connection and post generation (mini-app)
+  app.use('/auth', authRoutes);
+  app.use('/posts', postsRoutes);
+
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 100 * 1024 * 1024 },
@@ -160,7 +166,9 @@ export function createApp(initialSettings?: Settings): express.Express {
     if (
       !settings.setupComplete &&
       !['/setup', '/health', '/favicon.ico'].includes(requestPath) &&
-      !requestPath.startsWith('/static/')
+      !requestPath.startsWith('/static/') &&
+      !requestPath.startsWith('/auth') &&
+      !requestPath.startsWith('/posts')
     ) {
       res.redirect(303, '/setup');
       return;

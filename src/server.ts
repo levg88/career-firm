@@ -32,4 +32,8 @@ export function startServer(options: StartServerOptions = {}): http.Server {
   return server;
 }
 
+if (require.main === module) {
+  startServer();
+}
+
 export default app;
