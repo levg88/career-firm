@@ -724,9 +724,14 @@ export function createApp(initialSettings?: Settings): express.Express {
   });
 
   app.get('/auth/callback', async (req, res) => {
-    const { code } = req.query;
+    const { code, error, error_description } = req.query;
+    if (error) {
+      const msg = `${error}: ${error_description || ''}`.trim();
+      res.redirect(303, `/linkedin?error=${encodeURIComponent(msg)}`);
+      return;
+    }
     if (!code) {
-      linkedinPage(res, { error: 'Authorization code missing', statusCode: 400 } as any);
+      res.redirect(303, '/linkedin?error=Authorization+code+missing');
       return;
     }
     try {

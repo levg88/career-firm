@@ -11,7 +11,11 @@ router.get('/linkedin', (req, res) => {
 });
 
 router.get('/callback', async (req, res) => {
-  const { code } = req.query;
+  const { code, error, error_description } = req.query;
+  if (error) {
+    res.status(400).send(`${error}: ${error_description || ''}`.trim());
+    return;
+  }
   if (code) {
     try {
       const linkedInService = new LinkedInService();
