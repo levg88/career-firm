@@ -21,7 +21,7 @@ export class LinkedInService {
       response_type: 'code',
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
-      scope: 'r_liteprofile w_member_social',
+      scope: 'openid profile w_member_social',
     });
     return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
   }
