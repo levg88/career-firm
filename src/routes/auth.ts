@@ -1,5 +1,5 @@
-
 import express from 'express';
+
 import { LinkedInService } from '../services/linkedin';
 
 const router = express.Router();
@@ -10,14 +10,15 @@ router.get('/linkedin', (req, res) => {
   res.redirect(authUrl);
 });
 
-router.get('/callback', (req, res) => {
+router.get('/callback', async (req, res) => {
   const { code } = req.query;
   if (code) {
-    linkedInService.getAccessToken(code as string).then(token => {
+    try {
+      await linkedInService.getAccessToken(code as string);
       res.send('Authorization successful!');
-    }).catch(err => {
+    } catch (err) {
       res.status(500).send('Authorization failed');
-    });
+    }
   } else {
     res.status(400).send('Authorization code missing');
   }
