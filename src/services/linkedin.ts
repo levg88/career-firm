@@ -13,7 +13,7 @@ export class LinkedInService {
   constructor(config: LinkedInConfig = {}) {
     this.clientId = config.clientId || process.env.LINKEDIN_CLIENT_ID || 'YOUR_CLIENT_ID';
     this.clientSecret = config.clientSecret || process.env.LINKEDIN_CLIENT_SECRET || 'YOUR_CLIENT_SECRET';
-    this.redirectUri = config.redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+    this.redirectUri = config.redirectUri || process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:8765/auth/callback';
   }
 
   getAuthorizationUrl(): string {
