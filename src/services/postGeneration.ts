@@ -9,23 +9,28 @@ export interface PostGenerator {
   ): Promise<{ text: string }>;
 }
 
-function postPrompt(theme: string): Record<string, any>[] {
-  return [
+function postPrompt(theme: string, context?: string): Record<string, any>[] {
+  const background = (context || '').replace(/\s+/g, ' ').trim().slice(0, 4000);
+  const messages: Record<string, any>[] = [
     {
       role: 'system',
       content:
-        'You are an expert LinkedIn ghostwriter for a senior technology executive. ' +
-        'Write a polished, authentic LinkedIn post in the first person. Requirements: ' +
-        'a strong hook in the first line, 3-4 short paragraphs or a compact list of insights, ' +
-        'a concrete takeaway, a question or call to action at the end, and 3-5 relevant hashtags. ' +
-        'Do NOT restate the brief verbatim and do NOT mention that you are an AI. ' +
-        'Keep it between 150 and 250 words. Return only the post text.',
+        'You are an expert LinkedIn ghostwriter for a senior technology executive (VP R&D / CTO). ' +
+        'Write a post that sounds like a real person, not generic AI output. ' +
+        'Rules: start with a punchy hook of 12 words or fewer on its own line; use 2-4 short paragraphs; ' +
+        'ground claims in concrete experience or specific examples; avoid buzzwords, clichés, and phrases like ' +
+        '"in today\'s fast-paced world"; do not bold text; no emojis; end with a genuine question; ' +
+        'finish with 3 relevant hashtags. Do NOT restate the brief verbatim, do not mention being an AI, ' +
+        'and return only the post text. Aim for 140-200 words.',
     },
     {
       role: 'user',
-      content: `Theme / brief for the post:\n${theme}`,
+      content:
+        (background ? `Author background (use only if relevant):\n${background}\n\n` : '') +
+        `Theme / brief for the post:\n${theme}`,
     },
   ];
+  return messages;
 }
 
 function templatePost(theme: string): string {
@@ -50,12 +55,16 @@ export const postGeneration = {
     };
   },
 
-  async generateAsync(theme: string, llm?: LLMClient | PostGenerator): Promise<GeneratedPost> {
+  async generateAsync(
+    theme: string,
+    llm?: LLMClient | PostGenerator,
+    context?: string,
+  ): Promise<GeneratedPost> {
     const image = await imageGeneration.generateAsync(theme);
     let text = templatePost(theme);
     if (llm) {
       try {
-        const response = await llm.complete(postPrompt(theme), { temperature: 0.7 });
+        const response = await llm.complete(postPrompt(theme, context), { temperature: 0.8 });
         const generated = (response.text || '').trim();
         if (generated) text = generated;
       } catch {
@@ -70,8 +79,12 @@ export const postGeneration = {
     };
   },
 
-  async generateAndPublish(theme: string, llm?: LLMClient | PostGenerator): Promise<GeneratedPost> {
-    const post = await this.generateAsync(theme, llm);
+  async generateAndPublish(
+    theme: string,
+    llm?: LLMClient | PostGenerator,
+    context?: string,
+  ): Promise<GeneratedPost> {
+    const post = await this.generateAsync(theme, llm, context);
     const linkedin = new LinkedInService();
     await linkedin.publishPost(post.text, post.image.url);
     post.published = true;
@@ -83,12 +96,12 @@ export const postGeneration = {
     return this.generate(theme);
   },
 
-  async dailyAsync(llm?: LLMClient | PostGenerator): Promise<GeneratedPost> {
-    return this.generateAsync('Daily Update', llm);
+  async dailyAsync(llm?: LLMClient | PostGenerator, context?: string): Promise<GeneratedPost> {
+    return this.generateAsync('Daily Update', llm, context);
   },
 
-  async dailyAndPublish(llm?: LLMClient | PostGenerator): Promise<GeneratedPost> {
-    const post = await this.dailyAsync(llm);
+  async dailyAndPublish(llm?: LLMClient | PostGenerator, context?: string): Promise<GeneratedPost> {
+    const post = await this.dailyAsync(llm, context);
     const linkedin = new LinkedInService();
     await linkedin.publishPost(post.text, post.image.url);
     post.published = true;

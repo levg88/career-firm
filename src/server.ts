@@ -48,7 +48,12 @@ export function startServer(options: StartServerOptions = {}): http.Server {
       if (lastScheduledDate === today) return;
       lastScheduledDate = today;
       const theme = s.linkedin_schedule_theme || 'Daily Update';
-      const post = await postGeneration.generateAsync(theme, buildLlm(settings));
+      const profile = db.withSession(settings.dbPath, (conn) => db.getOrCreateProfile(conn));
+      const post = await postGeneration.generateAsync(
+        theme,
+        buildLlm(settings),
+        String(profile.context_text || ''),
+      );
       db.withSession(settings.dbPath, (conn) =>
         db.saveAppSettings(conn, { linkedin_last_post: JSON.stringify(post) }),
       );
